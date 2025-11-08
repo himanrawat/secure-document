@@ -11,21 +11,30 @@ import {
   ViolationCode,
   ViolationEvent,
 } from "@/lib/types/security";
+import { ReaderLocation } from "@/lib/types/reader";
 import { createLog, createViolation, shouldRevokeSession } from "@/lib/security/session";
 import { buildWatermarkPayload } from "@/lib/security/watermark";
 import { MonitoringNotifier } from "@/lib/monitoring/notifier";
 import { readableViolation } from "@/lib/security/events";
 
+type EvidencePayload = {
+  photo?: string | null;
+  frameHash?: string | null;
+  location?: ReaderLocation | null;
+};
+
 type UseSecuritySessionParams = {
   document: SecureDocument;
   viewer: ViewerProfile;
   initialSession: SessionStatus;
+  requestEvidence?: (code: ViolationCode) => Promise<EvidencePayload | null>;
 };
 
 export function useSecuritySession({
   document,
   viewer,
   initialSession,
+  requestEvidence,
 }: UseSecuritySessionParams) {
   const [session, setSession] = useState<SessionStatus>(initialSession);
   const [camera, setCamera] = useState<CameraInsight | null>(null);
@@ -84,19 +93,39 @@ export function useSecuritySession({
       const severity = code === "EXTERNAL_CAMERA_DETECTED" ? "CRITICAL" : "HIGH";
       const violation = createViolation(code, description, severity);
       setViolations((prev) => [violation, ...prev].slice(0, 32));
-      MonitoringNotifier.violation({
-        documentId: document.documentId,
-        viewerId: viewer.viewerId,
-        violation,
-        context,
-      });
+      const notify = (evidence?: EvidencePayload | null) => {
+        MonitoringNotifier.violation({
+          documentId: document.documentId,
+          viewerId: viewer.viewerId,
+          violation,
+          context,
+          evidence,
+        });
+      };
+      if (requestEvidence) {
+        void requestEvidence(code)
+          .then((evidence) => {
+            if (evidence?.photo) {
+              setViolations((prev) =>
+                prev.map((entry) =>
+                  entry.id === violation.id ? { ...entry, evidenceUrl: evidence.photo ?? entry.evidenceUrl } : entry,
+                ),
+              );
+            }
+            notify(evidence);
+          })
+          .catch(() => notify());
+      } else {
+        notify();
+      }
       pushLog("VIOLATION", { code, ...context });
       toast(description, { icon: "!" });
       if (shouldRevokeSession(violation, document)) {
         killSession("Session revoked due to policy violation.");
       }
+      return violation;
     },
-    [document, killSession, pushLog, viewer.viewerId],
+    [document, killSession, pushLog, requestEvidence, viewer.viewerId],
   );
 
   const updateCameraInsight = useCallback(

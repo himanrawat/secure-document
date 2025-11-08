@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SecureDocument, SessionStatus, ViewerProfile } from "@/lib/types/security";
+import { ReaderLocation } from "@/lib/types/reader";
 import { useSecuritySession } from "@/hooks/useSecuritySession";
 import { DocumentViewport } from "@/components/security/DocumentViewport";
 import { CameraSentinel } from "@/components/security/CameraSentinel";
@@ -10,6 +11,18 @@ import { SessionHud } from "@/components/security/SessionHud";
 import { ViolationPanel } from "@/components/security/ViolationPanel";
 import { WatermarkLayer } from "@/components/security/WatermarkLayer";
 
+type SnapshotDirective = {
+  id: string;
+  reason: "presence" | "violation";
+  metadata?: Record<string, unknown>;
+};
+
+type SnapshotResult = {
+  photo: string | null;
+  frameHash: string;
+  directive: SnapshotDirective;
+};
+
 type Props = {
   document: SecureDocument;
   viewer: ViewerProfile;
@@ -17,6 +30,103 @@ type Props = {
 };
 
 export function SecureViewerShell({ document, viewer, initialSession }: Props) {
+  const snapshotQueue = useRef<
+    Array<{ directive: SnapshotDirective; resolve: (result: SnapshotResult | null) => void }>
+  >([]);
+  const activeResolverRef = useRef<((result: SnapshotResult | null) => void) | null>(null);
+  const snapshotDirectiveRef = useRef<SnapshotDirective | null>(null);
+  const [snapshotDirective, setSnapshotDirective] = useState<SnapshotDirective | null>(null);
+  const lastLocationRef = useRef<ReaderLocation | null>(null);
+
+  const pumpSnapshotQueue = useCallback(() => {
+    if (snapshotDirectiveRef.current || snapshotQueue.current.length === 0) {
+      return;
+    }
+    const next = snapshotQueue.current.shift();
+    if (!next) {
+      return;
+    }
+    snapshotDirectiveRef.current = next.directive;
+    activeResolverRef.current = next.resolve;
+    setSnapshotDirective(next.directive);
+  }, []);
+
+  const requestSnapshot = useCallback(
+    (reason: SnapshotDirective["reason"], metadata?: Record<string, unknown>) =>
+      new Promise<SnapshotResult | null>((resolve) => {
+        const directive: SnapshotDirective = {
+          id: crypto.randomUUID(),
+          reason,
+          metadata,
+        };
+        snapshotQueue.current.push({ directive, resolve });
+        pumpSnapshotQueue();
+      }),
+    [pumpSnapshotQueue],
+  );
+
+  const handleSnapshot = useCallback(
+    (photo: string | null, frameHash: string, directive: SnapshotDirective) => {
+      if (activeResolverRef.current) {
+        activeResolverRef.current({ photo, frameHash, directive });
+      }
+      activeResolverRef.current = null;
+      snapshotDirectiveRef.current = null;
+      setSnapshotDirective(null);
+      pumpSnapshotQueue();
+    },
+    [pumpSnapshotQueue],
+  );
+
+  const sendPresence = useCallback(
+    async ({
+      photo,
+      frameHash,
+      location,
+      reason,
+    }: {
+      photo?: string | null;
+      frameHash?: string | null;
+      location?: ReaderLocation | null;
+      reason: string;
+    }) => {
+      try {
+        const payloadLocation = location ?? lastLocationRef.current;
+        await fetch("/api/presence", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            documentId: document.documentId,
+            photo: photo ?? null,
+            frameHash: frameHash ?? null,
+            location: payloadLocation
+              ? {
+                  ...payloadLocation,
+                  capturedAt: payloadLocation.capturedAt ?? new Date().toISOString(),
+                }
+              : null,
+            reason,
+          }),
+        });
+      } catch (error) {
+        console.error("Presence sync failed", error);
+      }
+    },
+    [document.documentId],
+  );
+
+  const captureViolationEvidence = useCallback(async () => {
+    const snapshot = await requestSnapshot("violation");
+    if (!snapshot || !snapshot.photo) {
+      return null;
+    }
+    return {
+      photo: snapshot.photo,
+      frameHash: snapshot.frameHash,
+      location: lastLocationRef.current,
+    };
+  }, [requestSnapshot]);
+
   const {
     session,
     camera,
@@ -29,9 +139,13 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
     registerViolation,
     handleFocusChange,
     killSession,
-  } = useSecuritySession({ document, viewer, initialSession });
+  } = useSecuritySession({
+    document,
+    viewer,
+    initialSession,
+    requestEvidence: captureViolationEvidence,
+  });
   const [fullscreenPrompt, setFullscreenPrompt] = useState(false);
-  const [photoSent, setPhotoSent] = useState(false);
 
   const stats = useMemo(
     () => ({
@@ -70,44 +184,44 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
   }, [registerViolation, requestFullscreen]);
 
   useEffect(() => {
-    let reported = false;
-    const report = async (location?: unknown) => {
-      if (reported) return;
-      reported = true;
-      await fetch("/api/presence", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: document.documentId, location }),
-      });
-    };
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) =>
-          report({
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude,
-            accuracy: pos.coords.accuracy,
-          }),
-        () => report(),
-        { timeout: 5000 },
-      );
-    } else {
-      report();
+    if (!("geolocation" in navigator)) {
+      void sendPresence({ reason: "geolocation_unavailable" });
+      return;
     }
-  }, [document.documentId]);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const location: ReaderLocation = {
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          capturedAt: new Date().toISOString(),
+        };
+        lastLocationRef.current = location;
+        void sendPresence({ location, reason: "geolocation" });
+      },
+      () => {
+        void sendPresence({ reason: "geolocation_denied" });
+      },
+      { timeout: 5000 },
+    );
+  }, [sendPresence]);
 
-  const handleSnapshot = useCallback(
-    async (photo: string, frameHash: string) => {
-      if (photoSent) return;
-      setPhotoSent(true);
-      await fetch("/api/presence", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: document.documentId, photo, frameHash }),
+  useEffect(() => {
+    let cancelled = false;
+    requestSnapshot("presence").then((result) => {
+      if (cancelled || !result || !result.photo) {
+        return;
+      }
+      void sendPresence({
+        photo: result.photo,
+        frameHash: result.frameHash,
+        reason: "presence_photo",
       });
-    },
-    [document.documentId, photoSent],
-  );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [requestSnapshot, sendPresence]);
 
   return (
     <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 pb-16 pt-8">
@@ -118,6 +232,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
           <CameraSentinel
             onInsight={updateCameraInsight}
             onSnapshot={handleSnapshot}
+            snapshotDirective={snapshotDirective}
             disabled={!session.active}
           />
           <ScreenShield

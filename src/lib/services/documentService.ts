@@ -9,7 +9,12 @@ import {
   ViewerIdentityRequirement,
   ViewerProfile,
 } from "@/lib/types/security";
-import { ReaderSnapshot } from "@/lib/types/reader";
+import {
+  ReaderLocation,
+  ReaderLogEntry,
+  ReaderSnapshot,
+  ReaderViolationEntry,
+} from "@/lib/types/reader";
 import { getDocumentsDir, getSessionsDir, getUploadsDir } from "@/lib/server/paths";
 import { ensureDir, listJsonFiles, readJson, writeJson } from "@/lib/server/fs";
 import { emitSystemEvent } from "@/lib/server/eventBus";
@@ -30,6 +35,12 @@ export type StoredDocument = SecureDocument & {
   identityRequirement: ViewerIdentityRequirement;
 };
 
+type SessionHistory = {
+  logs: ReaderLogEntry[];
+  violations: ReaderViolationEntry[];
+  lastLocation?: ReaderLocation;
+};
+
 export type StoredSession = {
   token: string;
   session: SessionStatus;
@@ -37,6 +48,7 @@ export type StoredSession = {
   otp: string;
   viewer: ViewerProfile;
   revokedReason?: string;
+  history?: SessionHistory;
 };
 
 export type CreateDocumentInput = {
@@ -178,6 +190,16 @@ async function mutateSession(
   return next;
 }
 
+function ensureHistory(record: StoredSession): SessionHistory {
+  if (!record.history) {
+    record.history = {
+      logs: [],
+      violations: [],
+    };
+  }
+  return record.history;
+}
+
 export async function markSessionInactive(token: string, reason?: string) {
   const updated = await mutateSession(token, (record) => {
     record.session.active = false;
@@ -191,6 +213,23 @@ export async function markSessionInactive(token: string, reason?: string) {
       createdAt: new Date().toISOString(),
     });
   }
+}
+
+export async function appendSessionLogEntry(
+  token: string,
+  input: { event: string; context?: Record<string, unknown> },
+) {
+  await mutateSession(token, (record) => {
+    const history = ensureHistory(record);
+    const entry: ReaderLogEntry = {
+      id: nanoid(),
+      event: input.event,
+      createdAt: new Date().toISOString(),
+      context: input.context,
+    };
+    history.logs = [entry, ...history.logs].slice(0, 40);
+    return record;
+  });
 }
 
 export async function attachViewerIdentity(
@@ -223,11 +262,52 @@ export async function attachViewerIdentity(
   return updated;
 }
 
-export async function recordPresenceEvent(docId: string, payload: Record<string, unknown>) {
+export async function recordPresenceEvent(
+  token: string,
+  docId: string,
+  payload: {
+    location?: ReaderLocation | null;
+    photo?: string | null;
+    frameHash?: string | null;
+    reason?: string;
+  },
+) {
+  await mutateSession(token, (record) => {
+    const history = ensureHistory(record);
+    if (payload.location) {
+      history.lastLocation = payload.location;
+    }
+    return record;
+  });
   emitSystemEvent({
     type: "PRESENCE_CAPTURED",
     payload: { documentId: docId, ...payload },
     createdAt: new Date().toISOString(),
+  });
+}
+
+export async function recordSessionViolation(
+  token: string,
+  input: {
+    violation: { id: string; code: string; description: string; createdAt: string };
+    photo?: string | null;
+    location?: ReaderLocation | null;
+  },
+) {
+  await mutateSession(token, (record) => {
+    const history = ensureHistory(record);
+    const entry: ReaderViolationEntry = {
+      id: input.violation.id,
+      code: input.violation.code,
+      message: input.violation.description,
+      occurredAt: input.violation.createdAt,
+      photo: input.photo ?? undefined,
+    };
+    history.violations = [entry, ...history.violations].slice(0, 25);
+    if (input.location) {
+      history.lastLocation = input.location;
+    }
+    return record;
   });
 }
 
@@ -238,6 +318,7 @@ export async function listReaderIdentities(): Promise<ReaderSnapshot[]> {
     .filter((session) => session.session.identityVerified)
     .map((session) => {
       const doc = docLookup.get(session.documentId);
+      const history = session.history;
       return {
         documentId: session.documentId,
         documentTitle: doc?.title ?? "Unknown",
@@ -246,6 +327,9 @@ export async function listReaderIdentities(): Promise<ReaderSnapshot[]> {
         phone: session.session.viewerIdentity?.phone,
         photo: session.session.viewerIdentity?.photo,
         verifiedAt: session.session.viewerIdentity?.verifiedAt,
+        lastLocation: history?.lastLocation,
+        logs: history?.logs?.slice(0, 8),
+        violations: history?.violations?.slice(0, 8),
       };
     })
     .sort((a, b) => (b.verifiedAt ?? 0) - (a.verifiedAt ?? 0));

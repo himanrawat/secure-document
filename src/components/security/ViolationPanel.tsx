@@ -22,8 +22,17 @@ export function ViolationPanel({ violations, logs }: Props) {
             key={violation.id}
             className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-xs text-rose-50"
           >
-            <p className="font-semibold">{violation.code}</p>
-            <p className="text-rose-100">{violation.description}</p>
+            <p className="font-semibold text-white">{violation.description}</p>
+            <p className="text-[0.6rem] uppercase tracking-[0.3em] text-rose-200/80">
+              Logged {new Date(violation.createdAt).toLocaleTimeString()}
+            </p>
+            {violation.evidenceUrl && (
+              <img
+                src={violation.evidenceUrl}
+                alt="Violation evidence"
+                className="mt-2 rounded-xl border border-white/10"
+              />
+            )}
           </div>
         ))}
         {!violations.length && (

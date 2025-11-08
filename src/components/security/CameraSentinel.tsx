@@ -4,9 +4,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CameraInsight } from "@/lib/types/security";
 import { evaluateCameraFrame } from "@/lib/security/camera";
 
+type SnapshotDirective = {
+  id: string;
+  reason: "presence" | "violation";
+  metadata?: Record<string, unknown>;
+};
+
 type Props = {
   onInsight: (insight: CameraInsight) => void;
-  onSnapshot?: (photo: string, frameHash: string) => void;
+  onSnapshot?: (photo: string | null, frameHash: string, directive: SnapshotDirective) => void;
+  snapshotDirective?: SnapshotDirective | null;
   disabled?: boolean;
 };
 
@@ -24,12 +31,11 @@ function captureFrame(video: HTMLVideoElement) {
   return canvas.toDataURL("image/jpeg", 0.7);
 }
 
-export function CameraSentinel({ onInsight, onSnapshot, disabled }: Props) {
+export function CameraSentinel({ onInsight, onSnapshot, snapshotDirective, disabled }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [state, setState] = useState<CameraState>("initializing");
   const [lastInsight, setLastInsight] = useState<CameraInsight | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [snapshotSent, setSnapshotSent] = useState(false);
 
   useEffect(() => {
     if (disabled) {
@@ -78,13 +84,6 @@ export function CameraSentinel({ onInsight, onSnapshot, disabled }: Props) {
         }
         setLastInsight(insight);
         onInsight(insight);
-        if (!snapshotSent && videoRef.current && onSnapshot) {
-          const photo = captureFrame(videoRef.current);
-          if (photo) {
-            setSnapshotSent(true);
-            onSnapshot(photo, insight.frameHash);
-          }
-        }
       } catch (e) {
         console.error("Camera evaluation error", e);
       }
@@ -93,7 +92,30 @@ export function CameraSentinel({ onInsight, onSnapshot, disabled }: Props) {
       mounted = false;
       window.clearInterval(interval);
     };
-  }, [disabled, onInsight, onSnapshot, snapshotSent, state]);
+  }, [disabled, onInsight, state]);
+
+  useEffect(() => {
+    if (!snapshotDirective || !onSnapshot || disabled) {
+      return;
+    }
+    let cancelled = false;
+    const capture = () => {
+      if (cancelled) {
+        return;
+      }
+      if (!videoRef.current || videoRef.current.readyState < 2) {
+        window.setTimeout(capture, 150);
+        return;
+      }
+      const frameHash = lastInsight?.frameHash ?? crypto.randomUUID();
+      const photo = captureFrame(videoRef.current);
+      onSnapshot(photo || null, frameHash, snapshotDirective);
+    };
+    capture();
+    return () => {
+      cancelled = true;
+    };
+  }, [disabled, lastInsight, onSnapshot, snapshotDirective]);
 
   const statusLabel = useMemo(() => {
     if (state === "initializing") {
