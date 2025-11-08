@@ -37,6 +37,8 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
   const snapshotDirectiveRef = useRef<SnapshotDirective | null>(null);
   const [snapshotDirective, setSnapshotDirective] = useState<SnapshotDirective | null>(null);
   const lastLocationRef = useRef<ReaderLocation | null>(null);
+  const capturePhotoPolicy = document.policies?.captureReaderPhoto ?? false;
+  const trackLocation = document.policies?.locationTracking ?? false;
 
   const pumpSnapshotQueue = useCallback(() => {
     if (snapshotDirectiveRef.current || snapshotQueue.current.length === 0) {
@@ -184,6 +186,9 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
   }, [registerViolation, requestFullscreen]);
 
   useEffect(() => {
+    if (!trackLocation) {
+      return;
+    }
     if (!("geolocation" in navigator)) {
       void sendPresence({ reason: "geolocation_unavailable" });
       return;
@@ -204,20 +209,13 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
       },
       { timeout: 5000 },
     );
-  }, [sendPresence]);
+  }, [sendPresence, trackLocation]);
 
   useEffect(() => {
-    let cancelled = false;
-    
-    // Only request photo if the policy allows it
-    const shouldCapturePhoto = document.policies?.captureReaderPhoto ?? false;
-    
-    if (!shouldCapturePhoto) {
-      // Still send presence notification without photo
-      void sendPresence({ reason: "presence_without_photo" });
+    if (!capturePhotoPolicy) {
       return;
     }
-    
+    let cancelled = false;
     requestSnapshot("presence").then((result) => {
       if (cancelled || !result || !result.photo) {
         return;
@@ -231,7 +229,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [requestSnapshot, sendPresence, document.policies]);
+  }, [capturePhotoPolicy, requestSnapshot, sendPresence]);
 
   return (
     <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 pb-16 pt-8">

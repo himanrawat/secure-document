@@ -110,6 +110,9 @@ export type SecureDocument = {
   policies?: DocumentSecurityPolicy;
   createdAt?: string;
   identityRequirement?: ViewerIdentityRequirement;
+  locked?: boolean;
+  lockedReason?: string;
+  lockedAt?: string;
 };
 
 export type CameraInsight = {

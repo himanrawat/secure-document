@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { SecureViewerShell } from "@/components/security/SecureViewerShell";
 import { getDocumentById, getSessionByToken } from "@/lib/services/documentService";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ documentId: string }>;
 };
@@ -21,6 +23,9 @@ export default async function ViewerPage({ params }: Props) {
   const document = await getDocumentById(documentId);
   if (!document) {
     notFound();
+  }
+  if (document.locked) {
+    redirect("/");
   }
   if (!sessionRecord.session.active) {
     redirect("/");

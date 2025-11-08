@@ -2,14 +2,17 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { ReaderSnapshot } from "@/lib/types/reader";
 
 type Props = {
   readers: ReaderSnapshot[];
+  onRefresh?: () => void;
 };
 
-export function ReadersPanel({ readers }: Props) {
+export function ReadersPanel({ readers, onRefresh }: Props) {
   const [selected, setSelected] = useState<ReaderSnapshot | null>(null);
+  const [erasing, setErasing] = useState(false);
 
   if (!readers.length) {
     return (
@@ -24,6 +27,28 @@ export function ReadersPanel({ readers }: Props) {
     acc[reader.documentId].push(reader);
     return acc;
   }, {});
+
+  const handleDelete = async (viewerId: string) => {
+    if (erasing) {
+      return;
+    }
+    try {
+      setErasing(true);
+      const response = await fetch(`/api/readers/${viewerId}`, { method: "DELETE" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? "Unable to delete reader data");
+      }
+      toast.success("Reader data deleted");
+      setSelected(null);
+      onRefresh?.();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to delete reader data";
+      toast.error(message);
+    } finally {
+      setErasing(false);
+    }
+  };
 
   const renderDetailPanel = (reader: ReaderSnapshot) => {
     const location = reader.lastLocation;
@@ -113,6 +138,16 @@ export function ReadersPanel({ readers }: Props) {
               </p>
             )}
           </section>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => handleDelete(reader.viewerId)}
+              disabled={erasing}
+              className="rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-rose-100 transition hover:border-rose-400 hover:text-rose-300 disabled:opacity-60"
+            >
+              {erasing ? "Deleting…" : "Delete reader data"}
+            </button>
+          </div>
         </div>
       </div>
     );

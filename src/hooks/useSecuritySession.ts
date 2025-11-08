@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
   ActivityLog,
@@ -42,6 +42,7 @@ export function useSecuritySession({
   const [violations, setViolations] = useState<ViolationEvent[]>(document.violations);
   const [focusLost, setFocusLost] = useState(false);
   const [revokedReason, setRevokedReason] = useState<string | null>(null);
+  const lockRequestedRef = useRef(false);
 
   const watermark = useMemo(
     () =>
@@ -87,6 +88,23 @@ export function useSecuritySession({
     [pushLog],
   );
 
+  const lockDocumentRemote = useCallback(
+    (reason: string) => {
+      if (lockRequestedRef.current) {
+        return;
+      }
+      lockRequestedRef.current = true;
+      void fetch(`/api/documents/${document.documentId}/lock`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      }).catch((error) => {
+        console.error("Failed to lock document", error);
+      });
+    },
+    [document.documentId],
+  );
+
   const registerViolation = useCallback(
     (code: ViolationCode, context?: Record<string, unknown>) => {
       const description = readableViolation(code);
@@ -121,11 +139,12 @@ export function useSecuritySession({
       pushLog("VIOLATION", { code, ...context });
       toast(description, { icon: "!" });
       if (shouldRevokeSession(violation, document)) {
+        lockDocumentRemote(description);
         killSession("Session revoked due to policy violation.");
       }
       return violation;
     },
-    [document, killSession, pushLog, requestEvidence, viewer.viewerId],
+    [document, killSession, lockDocumentRemote, pushLog, requestEvidence, viewer.viewerId],
   );
 
   const updateCameraInsight = useCallback(

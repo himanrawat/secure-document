@@ -22,6 +22,17 @@ export function OwnerDashboard() {
   const [events, setEvents] = useState<LiveEvent[]>([]);
   const [readers, setReaders] = useState<ReaderSnapshot[]>([]);
 
+  const refreshDocuments = useCallback(async () => {
+    try {
+      const response = await fetch("/api/documents", { cache: "no-store" });
+      const data = await response.json();
+      setDocuments(data.documents ?? []);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to load documents";
+      toast.error(message);
+    }
+  }, []);
+
   const refreshReaders = useCallback(async () => {
     try {
       const response = await fetch("/api/readers", { cache: "no-store" });
@@ -34,24 +45,8 @@ export function OwnerDashboard() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    const fetchDocs = async () => {
-      try {
-        const response = await fetch("/api/documents", { cache: "no-store" });
-        const data = await response.json();
-        if (!cancelled) {
-          setDocuments(data.documents ?? []);
-        }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unable to load documents";
-        toast.error(message);
-      }
-    };
-    fetchDocs();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void refreshDocuments();
+  }, [refreshDocuments]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -110,11 +105,11 @@ export function OwnerDashboard() {
         />
       )}
 
-      {activeTab === "Documents" && <DocumentsList documents={documents} />}
+      {activeTab === "Documents" && <DocumentsList documents={documents} onRefresh={refreshDocuments} />}
 
       {activeTab === "Events" && <EventsPanel events={events} />}
 
-      {activeTab === "Readers" && <ReadersPanel readers={readers} />}
+      {activeTab === "Readers" && <ReadersPanel readers={readers} onRefresh={refreshReaders} />}
     </div>
   );
 }

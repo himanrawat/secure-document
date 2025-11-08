@@ -17,14 +17,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid or expired code" }, { status: 404 });
     }
 
+    if (document.locked) {
+      return NextResponse.json(
+        { error: document.lockedReason ?? "Document is locked. Contact the owner to regain access." },
+        { status: 423 },
+      );
+    }
+
     const headerList = await headers();
     const userAgent = headerList.get("user-agent") ?? "unknown-device";
     const { token } = await createViewerSession(document, code, userAgent);
 
+    const requiresIdentity =
+      (document.identityRequirement?.required ?? false) || (document.policies?.captureReaderPhoto ?? false);
+
     const response = NextResponse.json({
       ok: true,
       documentId: document.documentId,
-      requireIdentity: document.identityRequirement?.required ?? false,
+      requireIdentity: requiresIdentity,
     });
     response.cookies.set("viewer-session", token, {
       httpOnly: true,

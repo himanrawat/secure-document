@@ -84,6 +84,20 @@ export async function findDocumentByOtp(otp: string) {
   return docs.find((doc) => doc.otp.toLowerCase() === otp.toLowerCase()) ?? null;
 }
 
+async function mutateDocument(
+  documentId: string,
+  mutator: (record: StoredDocument) => StoredDocument,
+): Promise<StoredDocument | null> {
+  const docPath = path.join(getDocumentsDir(), `${documentId}.json`);
+  const record = await readJson<StoredDocument>(docPath);
+  if (!record) {
+    return null;
+  }
+  const next = mutator(record);
+  await writeJson(docPath, next);
+  return next;
+}
+
 export async function createDocument(input: CreateDocumentInput): Promise<StoredDocument> {
   const id = nanoid();
   const uploadsDir = path.join(getUploadsDir(), id);
@@ -120,6 +134,7 @@ export async function createDocument(input: CreateDocumentInput): Promise<Stored
     createdAt: new Date().toISOString(),
     fileUrl: filePath ? `/api/documents/${id}/file` : null,
     identityRequirement: input.identityRequirement ?? fallbackIdentityRequirement,
+    locked: false,
   };
 
   await writeJson(path.join(getDocumentsDir(), `${id}.json`), record);
@@ -230,6 +245,39 @@ export async function appendSessionLogEntry(
     history.logs = [entry, ...history.logs].slice(0, 40);
     return record;
   });
+}
+
+export async function lockDocument(documentId: string, reason?: string) {
+  await mutateDocument(documentId, (record) => {
+    record.locked = true;
+    record.lockedReason = reason ?? "Security violation detected.";
+    record.lockedAt = new Date().toISOString();
+    return record;
+  });
+}
+
+export async function unlockDocument(documentId: string) {
+  await mutateDocument(documentId, (record) => {
+    record.locked = false;
+    record.lockedReason = undefined;
+    record.lockedAt = undefined;
+    return record;
+  });
+}
+
+export async function deleteReaderRecord(viewerId: string) {
+  const sessions = await listViewerSessions();
+  const matches = sessions.filter((session) => session.session.viewerId === viewerId);
+  await Promise.all(
+    matches.map((record) => {
+      const sessionPath = path.join(getSessionsDir(), `${record.token}.json`);
+      record.session.identityVerified = false;
+      record.session.viewerIdentity = undefined;
+      record.history = undefined;
+      return writeJson(sessionPath, record);
+    }),
+  );
+  return matches.length > 0;
 }
 
 export async function attachViewerIdentity(

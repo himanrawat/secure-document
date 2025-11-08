@@ -28,6 +28,9 @@ export type DashboardDocument = {
   policies?: DocumentSecurityPolicy;
   identityRequirement?: ViewerIdentityRequirement;
   otp?: string;
+  locked?: boolean;
+  lockedReason?: string;
+  lockedAt?: string;
 };
 
 

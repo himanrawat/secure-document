@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { getDocumentById, getSessionByToken } from "@/lib/services/documentService";
 import { IdentityVerificationScreen } from "@/components/receiver/IdentityVerificationScreen";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ documentId: string }>;
 };
@@ -25,20 +27,16 @@ export default async function ViewerIdentityPage({ params }: Props) {
     notFound();
   }
 
-  if (!document.identityRequirement?.required || sessionRecord.session.identityVerified) {
-    redirect(`/viewer/${documentId}`);
-  }
-  
-  // Also show verification screen if photo capture is enabled
+  const requiresIdentity = document.identityRequirement?.required ?? false;
+  const identitySatisfied = sessionRecord.session.identityVerified;
   const needsPhotoCapture = document.policies?.captureReaderPhoto ?? false;
-  const alreadyHasPhoto = !!sessionRecord.session.viewerIdentity?.photo;
-  
-  if (!document.identityRequirement?.required && (!needsPhotoCapture || alreadyHasPhoto)) {
+  const photoSatisfied = !!sessionRecord.session.viewerIdentity?.photo;
+
+  if ((!requiresIdentity || identitySatisfied) && (!needsPhotoCapture || photoSatisfied)) {
     redirect(`/viewer/${documentId}`);
   }
-  
-  // Determine if we're only capturing photo (no identity details needed)
-  const photoOnly = !document.identityRequirement?.required && needsPhotoCapture;
+
+  const photoOnly = !requiresIdentity && needsPhotoCapture;
 
   return (
     <IdentityVerificationScreen

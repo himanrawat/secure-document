@@ -6,9 +6,10 @@ import { DashboardDocument } from "@/components/dashboard/DocumentBuilder";
 
 type Props = {
   documents: DashboardDocument[];
+  onRefresh?: () => void;
 };
 
-export function DocumentsList({ documents }: Props) {
+export function DocumentsList({ documents, onRefresh }: Props) {
   const formatted = useMemo(
     () =>
       documents.map((doc) => ({
@@ -21,6 +22,21 @@ export function DocumentsList({ documents }: Props) {
   const copy = async (value: string) => {
     await navigator.clipboard.writeText(value);
     toast.success("Copied");
+  };
+
+  const unlock = async (documentId: string) => {
+    try {
+      const response = await fetch(`/api/documents/${documentId}/unlock`, { method: "POST" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? "Unable to unlock document");
+      }
+      toast.success("Document unlocked");
+      onRefresh?.();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to unlock document";
+      toast.error(message);
+    }
   };
 
   if (!documents.length) {
@@ -42,6 +58,24 @@ export function DocumentsList({ documents }: Props) {
             </div>
             <p className="text-sm text-slate-300">{doc.description}</p>
           </div>
+
+          {doc.locked && (
+            <div className="flex flex-col gap-2 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-100">
+              <p>
+                Locked: {doc.lockedReason ?? "Security violation detected"}{" "}
+                {doc.lockedAt && (
+                  <span className="text-rose-200">({new Date(doc.lockedAt).toLocaleString()})</span>
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={() => unlock(doc.documentId)}
+                className="self-start rounded-full border border-rose-200/40 px-3 py-1 text-[0.7rem] font-semibold text-white transition hover:border-rose-200 hover:text-rose-200"
+              >
+                Unlock for receivers
+              </button>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-3">
             <button
