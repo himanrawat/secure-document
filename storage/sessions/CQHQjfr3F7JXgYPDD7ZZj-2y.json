@@ -1,0 +1,29 @@
+{
+  "token": "CQHQjfr3F7JXgYPDD7ZZj-2y",
+  "session": {
+    "id": "8pXj5Kp9gT3h75rufRz8v",
+    "documentId": "aomrlf1yxyzXWTD5PvAsl",
+    "viewerId": "viewer-qj3_bN",
+    "startedAt": 1762622942957,
+    "expiresAt": 1762624142957,
+    "active": false,
+    "heartbeatMs": 5000,
+    "focusLost": false,
+    "tamperHash": "bbf6e80e-3a48-4c3f-9305-fcf5c6558d75"
+  },
+  "documentId": "aomrlf1yxyzXWTD5PvAsl",
+  "otp": "N0JHTP",
+  "viewer": {
+    "viewerId": "viewer-qj3_bN",
+    "name": "Confidential Viewer",
+    "email": "unknown@secured",
+    "device": {
+      "id": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "label": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "platform": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "ipAddress": "0.0.0.0",
+      "createdAt": "2025-11-08T17:29:02.957Z"
+    }
+  },
+  "revokedReason": "Session revoked due to policy violation."
+}

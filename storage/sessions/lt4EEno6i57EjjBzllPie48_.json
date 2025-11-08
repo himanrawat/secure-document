@@ -1,0 +1,35 @@
+{
+  "token": "lt4EEno6i57EjjBzllPie48_",
+  "session": {
+    "id": "NdA8ktbRD8e3Q2NBTFlcs",
+    "documentId": "KzyKHtiCItoOd_jgLL8Gb",
+    "viewerId": "viewer-X8HFv8",
+    "startedAt": 1762625611369,
+    "expiresAt": 1762626811369,
+    "active": false,
+    "heartbeatMs": 5000,
+    "focusLost": false,
+    "tamperHash": "9b3ee0f1-de02-4bcd-89f6-7178593b7f1f",
+    "identityVerified": true,
+    "viewerIdentity": {
+      "name": "Himanshu",
+      "phone": "9910978079",
+      "verifiedAt": 1762625641090
+    }
+  },
+  "documentId": "KzyKHtiCItoOd_jgLL8Gb",
+  "otp": "UL7X2V",
+  "viewer": {
+    "viewerId": "viewer-X8HFv8",
+    "name": "Confidential Viewer",
+    "email": "unknown@secured",
+    "device": {
+      "id": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "label": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "platform": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "ipAddress": "0.0.0.0",
+      "createdAt": "2025-11-08T18:13:31.370Z"
+    }
+  },
+  "revokedReason": "Session revoked due to policy violation."
+}

@@ -1,0 +1,41 @@
+{
+  "documentId": "aomrlf1yxyzXWTD5PvAsl",
+  "ownerId": "owner-root",
+  "title": "Test",
+  "description": "this is test ",
+  "classification": "CONFIDENTIAL",
+  "encryptedBlob": "C:\\work\\secure-document\\storage\\uploads\\aomrlf1yxyzXWTD5PvAsl\\Business.pdf",
+  "permissions": {
+    "maxViews": 3,
+    "expiryDate": "2025-11-09T16:51:50.800Z",
+    "allowedDevices": [],
+    "securityLevel": "MAXIMUM",
+    "maxSessionMinutes": 20,
+    "maxConcurrentSessions": 1,
+    "allowOffline": false
+  },
+  "watermarkFields": [
+    "viewerId",
+    "ip",
+    "timestamp"
+  ],
+  "logs": [],
+  "violations": [],
+  "otp": "N0JHTP",
+  "filePath": "C:\\work\\secure-document\\storage\\uploads\\aomrlf1yxyzXWTD5PvAsl\\Business.pdf",
+  "fileName": "Business.pdf",
+  "fileType": "application/pdf",
+  "richText": "<p><br></p>",
+  "policies": {
+    "cameraEnforcement": true,
+    "watermarking": true,
+    "screenShield": true,
+    "downloadDisabled": true,
+    "multiMonitorBlock": true,
+    "deviceLock": true,
+    "ipRestriction": "",
+    "locationTracking": true
+  },
+  "createdAt": "2025-11-08T16:52:43.507Z",
+  "fileUrl": "/api/documents/aomrlf1yxyzXWTD5PvAsl/file"
+}

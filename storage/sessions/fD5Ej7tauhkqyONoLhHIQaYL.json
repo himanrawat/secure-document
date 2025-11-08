@@ -1,0 +1,34 @@
+{
+  "token": "fD5Ej7tauhkqyONoLhHIQaYL",
+  "session": {
+    "id": "s5te7kUZwvcx5hjpIKeOM",
+    "documentId": "oIJiiCod3J0gpI4NTDqEa",
+    "viewerId": "viewer-25aqN7",
+    "startedAt": 1762626135022,
+    "expiresAt": 1762627335022,
+    "active": true,
+    "heartbeatMs": 5000,
+    "focusLost": false,
+    "tamperHash": "d0765163-b494-4301-9388-4d3bc532f568",
+    "identityVerified": true,
+    "viewerIdentity": {
+      "name": "him",
+      "phone": "9910978079",
+      "verifiedAt": 1762626150850
+    }
+  },
+  "documentId": "oIJiiCod3J0gpI4NTDqEa",
+  "otp": "Z3VF3A",
+  "viewer": {
+    "viewerId": "viewer-25aqN7",
+    "name": "Confidential Viewer",
+    "email": "unknown@secured",
+    "device": {
+      "id": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "label": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "platform": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "ipAddress": "0.0.0.0",
+      "createdAt": "2025-11-08T18:22:15.022Z"
+    }
+  }
+}

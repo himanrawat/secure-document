@@ -1,0 +1,47 @@
+{
+  "documentId": "KzyKHtiCItoOd_jgLL8Gb",
+  "ownerId": "owner-root",
+  "title": "indi",
+  "description": "",
+  "classification": "CONFIDENTIAL",
+  "encryptedBlob": "C:\\work\\secure-document\\storage\\uploads\\KzyKHtiCItoOd_jgLL8Gb\\Individual.pdf",
+  "permissions": {
+    "maxViews": 3,
+    "expiryDate": "2025-11-09T18:12:14.023Z",
+    "allowedDevices": [],
+    "securityLevel": "MAXIMUM",
+    "maxSessionMinutes": 20,
+    "maxConcurrentSessions": 1,
+    "allowOffline": false
+  },
+  "watermarkFields": [
+    "viewerId",
+    "ip",
+    "timestamp"
+  ],
+  "logs": [],
+  "violations": [],
+  "otp": "UL7X2V",
+  "filePath": "C:\\work\\secure-document\\storage\\uploads\\KzyKHtiCItoOd_jgLL8Gb\\Individual.pdf",
+  "fileName": "Individual.pdf",
+  "fileType": "application/pdf",
+  "richText": "<p>Start typing secure content...</p>",
+  "policies": {
+    "cameraEnforcement": true,
+    "watermarking": true,
+    "screenShield": true,
+    "downloadDisabled": true,
+    "multiMonitorBlock": true,
+    "deviceLock": true,
+    "ipRestriction": "",
+    "locationTracking": true
+  },
+  "createdAt": "2025-11-08T18:13:16.549Z",
+  "fileUrl": "/api/documents/KzyKHtiCItoOd_jgLL8Gb/file",
+  "identityRequirement": {
+    "required": true,
+    "expectedName": "Himanshu",
+    "expectedPhone": "9910978079",
+    "enforceMatch": true
+  }
+}

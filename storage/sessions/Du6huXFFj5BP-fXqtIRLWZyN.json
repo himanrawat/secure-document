@@ -1,0 +1,28 @@
+{
+  "token": "Du6huXFFj5BP-fXqtIRLWZyN",
+  "session": {
+    "id": "bd0okS3N0QwTaw-gMBIua",
+    "documentId": "j-iaoxsqpZ9pLbo6uyOWQ",
+    "viewerId": "viewer-b0npg0",
+    "startedAt": 1762622859648,
+    "expiresAt": 1762624059648,
+    "active": true,
+    "heartbeatMs": 5000,
+    "focusLost": false,
+    "tamperHash": "d2c2b101-d05d-47ca-a07f-029d1ce2e491"
+  },
+  "documentId": "j-iaoxsqpZ9pLbo6uyOWQ",
+  "otp": "ABFLWM",
+  "viewer": {
+    "viewerId": "viewer-b0npg0",
+    "name": "Confidential Viewer",
+    "email": "unknown@secured",
+    "device": {
+      "id": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "label": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "platform": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+      "ipAddress": "0.0.0.0",
+      "createdAt": "2025-11-08T17:27:39.649Z"
+    }
+  }
+}

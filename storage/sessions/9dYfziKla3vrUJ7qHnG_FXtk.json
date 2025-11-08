@@ -1,0 +1,28 @@
+{
+  "token": "9dYfziKla3vrUJ7qHnG_FXtk",
+  "session": {
+    "id": "A7FIgfl986i-XeJrzefP9",
+    "documentId": "aomrlf1yxyzXWTD5PvAsl",
+    "viewerId": "viewer-HP6wjm",
+    "startedAt": 1762622811413,
+    "expiresAt": 1762624011413,
+    "active": true,
+    "heartbeatMs": 5000,
+    "focusLost": false,
+    "tamperHash": "3827528b-ec6e-4bfd-a318-2023b1ce3adb"
+  },
+  "documentId": "aomrlf1yxyzXWTD5PvAsl",
+  "otp": "N0JHTP",
+  "viewer": {
+    "viewerId": "viewer-HP6wjm",
+    "name": "Confidential Viewer",
+    "email": "unknown@secured",
+    "device": {
+      "id": "node",
+      "label": "node",
+      "platform": "node",
+      "ipAddress": "0.0.0.0",
+      "createdAt": "2025-11-08T17:26:51.414Z"
+    }
+  }
+}
