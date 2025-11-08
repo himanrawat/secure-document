@@ -208,6 +208,16 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    
+    // Only request photo if the policy allows it
+    const shouldCapturePhoto = document.policies?.captureReaderPhoto ?? false;
+    
+    if (!shouldCapturePhoto) {
+      // Still send presence notification without photo
+      void sendPresence({ reason: "presence_without_photo" });
+      return;
+    }
+    
     requestSnapshot("presence").then((result) => {
       if (cancelled || !result || !result.photo) {
         return;
@@ -221,7 +231,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [requestSnapshot, sendPresence]);
+  }, [requestSnapshot, sendPresence, document.policies]);
 
   return (
     <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 pb-16 pt-8">

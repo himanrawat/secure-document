@@ -68,6 +68,7 @@ const defaultPolicies: DocumentSecurityPolicy = {
   deviceLock: true,
   ipRestriction: "",
   locationTracking: true,
+  captureReaderPhoto: true,
 };
 
 const defaultIdentityRequirement: ViewerIdentityRequirement = {
@@ -102,6 +103,7 @@ export function DocumentBuilder({ onCreated }: Props) {
       { key: "multiMonitorBlock", label: "Block extra monitors" },
       { key: "deviceLock", label: "Device fingerprint lock" },
       { key: "locationTracking", label: "Location capture" },
+      { key: "captureReaderPhoto", label: "Capture reader photo" },
     ],
     [],
   );

@@ -10,9 +10,10 @@ type Props = {
   documentId: string;
   requirement: ViewerIdentityRequirement;
   viewerDevice: ViewerDeviceFingerprint;
+  photoOnly?: boolean;
 };
 
-export function IdentityVerificationScreen({ documentId, requirement, viewerDevice }: Props) {
+export function IdentityVerificationScreen({ documentId, requirement, viewerDevice, photoOnly = false }: Props) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -88,10 +89,13 @@ export function IdentityVerificationScreen({ documentId, requirement, viewerDevi
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (requirement.required && (!name.trim() || !phone.trim())) {
+    
+    // Only validate name/phone if identity verification is actually required
+    if (requirement.required && !photoOnly && (!name.trim() || !phone.trim())) {
       toast.error("Name and phone are required.");
       return;
     }
+    
     if (!ensurePhoto()) {
       toast.error("Capture photo before continuing.");
       return;
@@ -124,11 +128,17 @@ export function IdentityVerificationScreen({ documentId, requirement, viewerDevi
         className="w-full max-w-2xl space-y-6 rounded-[32px] border border-white/10 bg-white/5 px-8 py-10"
       >
         <header className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Secure identity check</p>
-          <h1 className="text-3xl font-semibold text-white">Share who you are before viewing.</h1>
+          <p className="text-xs uppercase tracking-[0.4em] text-slate-400">
+            {photoOnly ? "Photo capture" : "Secure identity check"}
+          </p>
+          <h1 className="text-3xl font-semibold text-white">
+            {photoOnly ? "Quick photo before viewing." : "Share who you are before viewing."}
+          </h1>
           <p className="text-sm text-slate-300">
-            We capture a still frame via your camera, plus the details below. These are encrypted and sent to
-            the document owner for compliance.
+            {photoOnly 
+              ? "The owner requires a photo for security. We'll capture one frame from your camera and send it securely to the document owner."
+              : "We capture a still frame via your camera, plus the details below. These are encrypted and sent to the document owner for compliance."
+            }
           </p>
         </header>
 
@@ -177,30 +187,32 @@ export function IdentityVerificationScreen({ documentId, requirement, viewerDevi
           )}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.3em] text-slate-400">
-              Your full name {requirement.required && <span className="text-rose-300">*</span>}
-            </label>
-            <input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-cyan-400 focus:outline-none"
-              placeholder="e.g. Alex Doe"
-            />
+        {!photoOnly && (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                Your full name {requirement.required && <span className="text-rose-300">*</span>}
+              </label>
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-cyan-400 focus:outline-none"
+                placeholder="e.g. Alex Doe"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                Phone number {requirement.required && <span className="text-rose-300">*</span>}
+              </label>
+              <input
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-cyan-400 focus:outline-none"
+                placeholder="+1 555 123 4567"
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.3em] text-slate-400">
-              Phone number {requirement.required && <span className="text-rose-300">*</span>}
-            </label>
-            <input
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-cyan-400 focus:outline-none"
-              placeholder="+1 555 123 4567"
-            />
-          </div>
-        </div>
+        )}
 
           <div className="rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-xs text-slate-300">
             <p className="font-semibold text-white">Camera notice</p>

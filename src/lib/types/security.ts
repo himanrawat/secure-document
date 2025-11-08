@@ -54,6 +54,7 @@ export type DocumentSecurityPolicy = {
   deviceLock: boolean;
   ipRestriction?: string;
   locationTracking: boolean;
+  captureReaderPhoto: boolean;
 };
 
 export type ViewerProfile = {

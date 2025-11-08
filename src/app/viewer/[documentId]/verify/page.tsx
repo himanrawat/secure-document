@@ -28,12 +28,24 @@ export default async function ViewerIdentityPage({ params }: Props) {
   if (!document.identityRequirement?.required || sessionRecord.session.identityVerified) {
     redirect(`/viewer/${documentId}`);
   }
+  
+  // Also show verification screen if photo capture is enabled
+  const needsPhotoCapture = document.policies?.captureReaderPhoto ?? false;
+  const alreadyHasPhoto = !!sessionRecord.session.viewerIdentity?.photo;
+  
+  if (!document.identityRequirement?.required && (!needsPhotoCapture || alreadyHasPhoto)) {
+    redirect(`/viewer/${documentId}`);
+  }
+  
+  // Determine if we're only capturing photo (no identity details needed)
+  const photoOnly = !document.identityRequirement?.required && needsPhotoCapture;
 
   return (
     <IdentityVerificationScreen
       documentId={documentId}
       requirement={document.identityRequirement}
       viewerDevice={sessionRecord.viewer.device}
+      photoOnly={photoOnly}
     />
   );
 }

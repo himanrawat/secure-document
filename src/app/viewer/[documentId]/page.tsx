@@ -25,7 +25,14 @@ export default async function ViewerPage({ params }: Props) {
   if (!sessionRecord.session.active) {
     redirect("/");
   }
-  if (document.identityRequirement?.required && !sessionRecord.session.identityVerified) {
+  
+  // Check if identity verification is required
+  const needsIdentityVerification = document.identityRequirement?.required && !sessionRecord.session.identityVerified;
+  
+  // Check if photo capture is required but not yet captured
+  const needsPhotoCapture = (document.policies?.captureReaderPhoto ?? false) && !sessionRecord.session.viewerIdentity?.photo;
+  
+  if (needsIdentityVerification || needsPhotoCapture) {
     redirect(`/viewer/${documentId}/verify`);
   }
 
