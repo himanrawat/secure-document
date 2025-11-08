@@ -39,6 +39,29 @@ export function DocumentsList({ documents, onRefresh }: Props) {
     }
   };
 
+  const remove = async (documentId: string) => {
+    const confirmed = window.confirm("Delete this document? This cannot be undone.");
+    if (!confirmed) {
+      return;
+    }
+    const purgeReaders = window.confirm("Also remove reader data for this document?");
+    try {
+      const response = await fetch(
+        `/api/documents/${documentId}?purgeReaders=${purgeReaders}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? "Unable to delete document");
+      }
+      toast.success("Document deleted");
+      onRefresh?.();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to delete document";
+      toast.error(message);
+    }
+  };
+
   if (!documents.length) {
     return (
       <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-8 text-center text-sm text-slate-300">
@@ -103,6 +126,13 @@ export function DocumentsList({ documents, onRefresh }: Props) {
                 Preview file
               </a>
             )}
+            <button
+              type="button"
+              onClick={() => remove(doc.documentId)}
+              className="rounded-full border border-rose-400/40 px-3 py-1 text-xs text-rose-100 transition hover:border-rose-300 hover:text-rose-200"
+            >
+              Delete
+            </button>
           </div>
 
           {doc.identityRequirement?.required && (

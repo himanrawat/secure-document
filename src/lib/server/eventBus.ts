@@ -3,6 +3,7 @@ import { EventEmitter } from "events";
 export type SystemEvent = {
   type:
     | "DOCUMENT_CREATED"
+    | "DOCUMENT_DELETED"
     | "OTP_VERIFIED"
     | "SESSION_HEARTBEAT"
     | "VIOLATION"
