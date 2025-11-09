@@ -4,6 +4,7 @@ import {
   uploadToR2,
   deleteFromR2,
 } from "@/lib/storage/r2";
+import { env } from "@/lib/env";
 import {
   DocumentPermissions,
   DocumentSecurityPolicy,
@@ -73,8 +74,8 @@ type DocumentFileRow = {
   name: string;
   type: string;
   size: number;
-  r2_key: string;
-  url: string;
+  r2_key: string | null;
+  url: string | null;
 };
 
 type DocumentRow = {
@@ -106,6 +107,26 @@ type SessionRow = {
   history?: SessionHistory | null;
 };
 
+function deriveR2Key(file: DocumentFileRow): string | undefined {
+  if (file.r2_key) {
+    return file.r2_key;
+  }
+  if (!file.url || file.url.startsWith("/api/")) {
+    return undefined;
+  }
+  try {
+    const parsed = new URL(file.url);
+    const bucketSegment = `/${env.r2Bucket}/`;
+    const idx = parsed.pathname.indexOf(bucketSegment);
+    if (idx >= 0) {
+      return parsed.pathname.slice(idx + bucketSegment.length);
+    }
+    return parsed.pathname.replace(/^\/+/, "");
+  } catch {
+    return undefined;
+  }
+}
+
 function mapAttachments(documentId: string, files?: DocumentFileRow[] | null): DocumentAttachment[] {
   if (!files) return [];
   return files.map((file) => ({
@@ -114,7 +135,7 @@ function mapAttachments(documentId: string, files?: DocumentFileRow[] | null): D
     type: file.type,
     size: file.size,
     url: `/api/documents/${documentId}/file?attachmentId=${file.id}`,
-    key: file.r2_key,
+    key: deriveR2Key(file),
   }));
 }
 

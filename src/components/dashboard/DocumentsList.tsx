@@ -49,6 +49,13 @@ export function DocumentsList({ documents, onRefresh }: Props) {
         `/api/documents/${documentId}?purgeReaders=true`,
         { method: "DELETE" },
       );
+      if (response.status === 404) {
+        toast("Document already removed", {
+          icon: "ℹ️",
+        });
+        onRefresh?.();
+        return;
+      }
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
         throw new Error(payload?.error ?? "Unable to delete document");
