@@ -357,7 +357,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 	// Show blocking screen if DevTools detected before document loads
 	if (devToolsChecked && devToolsOpen) {
 		return (
-			<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+			<div className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-900 to-slate-800">
 				<div className="max-w-md space-y-6 rounded-xl border border-rose-500/40 bg-rose-500/5 p-8 text-center">
 					<div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/20">
 						<svg
@@ -403,7 +403,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 	// Show loading state while checking
 	if (!devToolsChecked) {
 		return (
-			<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+			<div className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-900 to-slate-800">
 				<div className="text-center">
 					<div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-cyan-500/20 border-t-cyan-500"></div>
 					<p className="mt-4 text-sm text-slate-400">

@@ -3,6 +3,12 @@ import { cookies } from "next/headers";
 import { emitSystemEvent } from "@/lib/server/eventBus";
 import { appendSessionLogEntry } from "@/lib/services/documentService";
 
+type LogPayload = {
+  event?: unknown;
+  context?: Record<string, unknown>;
+  [key: string]: unknown;
+};
+
 export async function POST(request: Request) {
   let payload: Record<string, unknown> = {};
   const text = await request.text();
@@ -13,7 +19,7 @@ export async function POST(request: Request) {
       payload = {};
     }
   }
-  const data = payload.data ?? payload;
+  const data = (payload.data ?? payload) as LogPayload;
   const cookieStore = await cookies();
   const token = cookieStore.get("viewer-session")?.value;
   if (token) {

@@ -33,7 +33,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 px-6 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-900 to-slate-950 px-6 py-12">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md space-y-6 rounded-3xl border border-white/10 bg-white/5 px-8 py-10 text-white"

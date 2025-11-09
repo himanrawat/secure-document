@@ -37,11 +37,12 @@ export default async function ViewerIdentityPage({ params }: Props) {
   }
 
   const photoOnly = !requiresIdentity && needsPhotoCapture;
+  const requirement = document.identityRequirement ?? { required: false };
 
   return (
     <IdentityVerificationScreen
       documentId={documentId}
-      requirement={document.identityRequirement}
+      requirement={requirement}
       viewerDevice={sessionRecord.viewer.device}
       photoOnly={photoOnly}
     />
