@@ -51,6 +51,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 	const capturePhotoPolicy = document.policies?.captureReaderPhoto ?? false;
 	const trackLocation = document.policies?.locationTracking ?? false;
 	const [cameraObstructed, setCameraObstructed] = useState(false);
+	const [shouldEnforceFullscreen, setShouldEnforceFullscreen] = useState(true);
 
 	const pumpSnapshotQueue = useCallback(() => {
 		if (snapshotDirectiveRef.current || snapshotQueue.current.length === 0) {
@@ -261,7 +262,34 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 		}
 	}, []);
 
+	const evaluateViewport = useCallback(() => {
+		if (typeof window === "undefined") {
+			return;
+		}
+		const ua = window.navigator.userAgent.toLowerCase();
+		const mobileOs = /(iphone|ipad|ipod|android)/.test(ua);
+		const compactViewport =
+			Math.min(window.innerWidth, window.innerHeight) <= 900;
+		const relaxEnforcement = mobileOs && compactViewport;
+		setShouldEnforceFullscreen(!relaxEnforcement);
+	}, []);
+
 	useEffect(() => {
+		evaluateViewport();
+		window.addEventListener("resize", evaluateViewport);
+		return () => window.removeEventListener("resize", evaluateViewport);
+	}, [evaluateViewport]);
+
+	useEffect(() => {
+		if (!shouldEnforceFullscreen) {
+			setFullscreenPrompt(false);
+		}
+	}, [shouldEnforceFullscreen]);
+
+	useEffect(() => {
+		if (!shouldEnforceFullscreen) {
+			return;
+		}
 		const enforce = () => {
 			if (!window.document.fullscreenElement) {
 				setFullscreenPrompt(true);
@@ -278,7 +306,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 			window.clearTimeout(timer);
 			window.document.removeEventListener("fullscreenchange", enforce);
 		};
-	}, [registerViolation, requestFullscreen]);
+	}, [registerViolation, requestFullscreen, shouldEnforceFullscreen]);
 
 	useEffect(() => {
 		if (!trackLocation) {
@@ -432,7 +460,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 					</div>
 				</div>
 			)}
-			{fullscreenPrompt && (
+			{shouldEnforceFullscreen && fullscreenPrompt && (
 				<div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 backdrop-blur-xl">
 					<div className="space-y-4 rounded-xl border border-white/10 bg-white/5 px-8 py-6 text-center text-white">
 						<p className="text-lg font-semibold">Fullscreen required</p>
