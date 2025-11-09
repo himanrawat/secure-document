@@ -260,8 +260,8 @@ export function ReadersPanel({
 						key={documentId}
 						className="glass-panel flex flex-col gap-4 px-5 py-4"
 					>
-						<header className="flex items-center justify-between">
-							<div>
+						<header className="flex flex-wrap items-center justify-between gap-2">
+							<div className="space-y-1">
 								<p className="text-xs uppercase tracking-[0.3em] text-slate-400">
 									Document
 								</p>
@@ -269,9 +269,20 @@ export function ReadersPanel({
 									{records[0].documentTitle}
 								</h3>
 							</div>
-							<span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-300">
-								{records.length} reader{records.length > 1 ? "s" : ""}
-							</span>
+							<div className="flex items-center gap-2">
+								<span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-300">
+									{records.length} reader{records.length > 1 ? "s" : ""}
+								</span>
+								<span
+									className={`rounded-full px-3 py-1 text-xs ${
+										records[0].locked
+											? "bg-rose-500/20 text-rose-200"
+											: "bg-emerald-500/20 text-emerald-100"
+									}`}
+								>
+									{records[0].locked ? "Locked" : "Open"}
+								</span>
+							</div>
 						</header>
 						<div className="grid gap-4 md:grid-cols-2">
 							{records.map((reader) => (

@@ -31,4 +31,6 @@ export type ReaderSnapshot = {
   lastLocation?: ReaderLocation;
   logs?: ReaderLogEntry[];
   violations?: ReaderViolationEntry[];
+  locked?: boolean;
+  files?: { name: string; url: string }[];
 };

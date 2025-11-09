@@ -41,12 +41,8 @@ export default async function ViewerPage({ params }: Props) {
     redirect(`/viewer/${documentId}/verify`);
   }
 
-  const { otp: _ignoredOtp, ...sanitizedDoc } = document;
+  const { otp: _ignoredOtp, ...safeDocument } = document;
   void _ignoredOtp;
-  const safeDocument = {
-    ...sanitizedDoc,
-    fileUrl: document.filePath ? `/api/documents/${document.documentId}/file` : document.fileUrl ?? null,
-  };
   return (
     <SecureViewerShell
       document={safeDocument}

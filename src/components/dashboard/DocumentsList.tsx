@@ -44,10 +44,9 @@ export function DocumentsList({ documents, onRefresh }: Props) {
     if (!confirmed) {
       return;
     }
-    const purgeReaders = window.confirm("Also remove reader data for this document?");
     try {
       const response = await fetch(
-        `/api/documents/${documentId}?purgeReaders=${purgeReaders}`,
+        `/api/documents/${documentId}?purgeReaders=true`,
         { method: "DELETE" },
       );
       if (!response.ok) {
@@ -117,15 +116,15 @@ export function DocumentsList({ documents, onRefresh }: Props) {
                 Copy OTP ({doc.otp})
               </button>
             )}
-            {doc.fileUrl && (
+            {doc.attachments?.length ? (
               <a
-                href={doc.fileUrl}
+                href={`/api/documents/${doc.documentId}/file?attachmentId=${doc.attachments[0].id}`}
                 target="_blank"
                 className="rounded-full border border-white/10 px-3 py-1 text-xs text-white"
               >
                 Preview file
               </a>
-            )}
+            ) : null}
             <button
               type="button"
               onClick={() => remove(doc.documentId)}
@@ -165,3 +164,5 @@ export function DocumentsList({ documents, onRefresh }: Props) {
     </div>
   );
 }
+
+

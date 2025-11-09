@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { SecureDocument } from "@/lib/types/security";
+import { SecureDocument, DocumentAttachment } from "@/lib/types/security";
 import { SecureFileViewer } from "@/components/security/SecureFileViewer";
 
 type Props = {
@@ -10,8 +10,12 @@ type Props = {
 
 export function DocumentViewport({ document }: Props) {
 	const [showSummary, setShowSummary] = useState(false);
-	const hasFile = Boolean(document.fileUrl);
-	const showRichText = !hasFile && Boolean(document.richText);
+	const attachments = document.attachments ?? [];
+	const [activeAttachment, setActiveAttachment] = useState<DocumentAttachment | null>(
+		attachments[0] ?? null
+	);
+	const hasFile = Boolean(activeAttachment);
+	const showRichText = Boolean(document.richText);
 	const permissions = document.permissions;
 	const [isProtected, setIsProtected] = useState(true);
 
@@ -40,14 +44,18 @@ export function DocumentViewport({ document }: Props) {
 		};
 	}, []);
 
+	useEffect(() => {
+		setActiveAttachment(attachments[0] ?? null);
+	}, [document.documentId]);
+
 	const fileMeta = useMemo(() => {
-		if (!document.fileName && !document.fileType) {
+		if (!activeAttachment) {
 			return null;
 		}
-		return [document.fileName, document.fileType?.toUpperCase()]
+		return [activeAttachment.name, activeAttachment.type?.toUpperCase()]
 			.filter(Boolean)
 			.join(" | ");
-	}, [document.fileName, document.fileType]);
+	}, [activeAttachment]);
 
 	return (
 		<article
@@ -133,7 +141,30 @@ export function DocumentViewport({ document }: Props) {
 				)}
 			</header>
 
-			{hasFile && document.fileUrl && (
+			{attachments.length > 0 && (
+				<div className="space-y-2">
+					<p className="text-xs uppercase tracking-[0.3em] text-slate-400">Attachments</p>
+					<div className="flex flex-wrap gap-2">
+						{attachments.map((attachment) => {
+							const isActive = attachment.id === activeAttachment?.id;
+							return (
+								<button
+									key={attachment.id}
+									type="button"
+									onClick={() => setActiveAttachment(attachment)}
+									className={`rounded-full px-4 py-2 text-xs font-semibold ${
+										isActive ? "bg-cyan-500 text-slate-900" : "bg-white/10 text-slate-200"
+									}`}
+								>
+									{attachment.name}
+								</button>
+							);
+						})}
+					</div>
+				</div>
+			)}
+
+			{hasFile && activeAttachment?.url && (
 				<div
 					data-protected="true"
 					style={{
@@ -142,9 +173,9 @@ export function DocumentViewport({ document }: Props) {
 					}}
 				>
 					<SecureFileViewer
-						fileUrl={document.fileUrl}
-						fileType={document.fileType}
-						fileName={document.fileName}
+						fileUrl={`/api/documents/${document.documentId}/file?attachmentId=${activeAttachment.id}`}
+						fileType={activeAttachment.type}
+						fileName={activeAttachment.name}
 					/>
 					{/* Invisible protection layer */}
 					<div
@@ -159,7 +190,7 @@ export function DocumentViewport({ document }: Props) {
 				</div>
 			)}
 
-			{!hasFile && showRichText && (
+			{showRichText && (
 				<section
 					className="rounded-2xl border border-white/5 bg-white/5 p-5 text-sm leading-relaxed text-slate-100"
 					data-protected="true"

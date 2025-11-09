@@ -104,20 +104,32 @@ export function OwnerDashboard() {
 		return () => clearInterval(interval);
 	}, [activeTab, refreshReaders]);
 
-	return (
-		<div className="mx-auto max-w-6xl space-y-10 px-6 py-10">
-			<header className="space-y-3 text-white">
-				<p className="text-xs uppercase tracking-[0.4em] text-slate-400">
-					Owner Console
-				</p>
-				<h1 className="text-4xl font-semibold">
-					Create, monitor, and revoke documents in real time.
-				</h1>
-				<p className="text-slate-300">
-					Upload files, craft rich text, generate mandatory OTPs, and watch your
-					receivers on the live feed.
-				</p>
-			</header>
+ return (
+    <div className="mx-auto max-w-6xl space-y-10 px-6 py-10">
+      <header className="flex flex-col gap-4 text-white md:flex-row md:items-center md:justify-between">
+        <div className="space-y-3">
+          <p className="text-xs uppercase tracking-[0.4em] text-slate-400">
+            Owner Console
+          </p>
+          <h1 className="text-4xl font-semibold">
+            Create, monitor, and revoke documents in real time.
+          </h1>
+          <p className="text-slate-300">
+            Upload files, craft rich text, generate mandatory OTPs, and watch your
+            receivers on the live feed.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={async () => {
+            await fetch("/api/auth/logout", { method: "POST" });
+            window.location.href = "/login";
+          }}
+          className="rounded-full border border-white/20 px-4 py-2 text-sm text-white transition hover:border-white/40"
+        >
+          Sign out
+        </button>
+      </header>
 
 			<div className="flex gap-3">
 				{tabs.map((tab) => (

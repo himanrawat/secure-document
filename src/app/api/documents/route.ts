@@ -1,20 +1,27 @@
 import { NextResponse } from "next/server";
 import { createDocument, listDocuments } from "@/lib/services/documentService";
+import { getSessionFromCookies } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const documents = await listDocuments();
-  const sanitized = documents.map((doc) => {
-    const { encryptedBlob: _enc, filePath: _path, ...rest } = doc;
+  const session = await getSessionFromCookies();
+  if (!session || (session.role !== "owner" && session.role !== "admin")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const documents = await listDocuments(session.id);
+  const sanitized = documents.map(({ encryptedBlob: _enc, ...rest }) => {
     void _enc;
-    void _path;
     return rest;
   });
   return NextResponse.json({ documents: sanitized });
 }
 
 export async function POST(request: Request) {
+  const session = await getSessionFromCookies();
+  if (!session || (session.role !== "owner" && session.role !== "admin")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const formData = await request.formData();
   const title = String(formData.get("title") ?? "");
   const description = String(formData.get("description") ?? "");
@@ -39,31 +46,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid security payload." }, { status: 400 });
   }
 
-  const file = formData.get("file");
-  let uploadData: { name: string; type: string; buffer: Buffer } | undefined;
-  if (file && file instanceof File && file.size > 0) {
+  const uploadData: { name: string; type: string; buffer: Buffer }[] = [];
+  const fileEntries = formData.getAll("files").filter((entry) => entry instanceof File) as File[];
+  for (const file of fileEntries) {
+    if (file.size === 0) continue;
     const arrayBuffer = await file.arrayBuffer();
-    uploadData = {
+    uploadData.push({
       name: file.name,
       type: file.type || "application/octet-stream",
       buffer: Buffer.from(arrayBuffer),
-    };
+    });
+  }
+  const legacyFile = formData.get("file");
+  if (legacyFile instanceof File && legacyFile.size > 0) {
+    const arrayBuffer = await legacyFile.arrayBuffer();
+    uploadData.push({
+      name: legacyFile.name,
+      type: legacyFile.type || "application/octet-stream",
+      buffer: Buffer.from(arrayBuffer),
+    });
   }
 
   const document = await createDocument({
     title,
     description,
     otp,
-    ownerId: "owner-root",
+    ownerId: session.id,
     permissions,
     policies,
     identityRequirement,
     richText,
-    file: uploadData,
+    files: uploadData,
   });
 
-  const { encryptedBlob: _enc, filePath: _path, ...sanitized } = document;
+  const { encryptedBlob: _enc, ...sanitized } = document;
   void _enc;
-  void _path;
   return NextResponse.json({ document: sanitized });
 }

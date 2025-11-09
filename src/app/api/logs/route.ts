@@ -4,7 +4,15 @@ import { emitSystemEvent } from "@/lib/server/eventBus";
 import { appendSessionLogEntry } from "@/lib/services/documentService";
 
 export async function POST(request: Request) {
-  const payload = await request.json();
+  let payload: Record<string, unknown> = {};
+  const text = await request.text();
+  if (text) {
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = {};
+    }
+  }
   const data = payload.data ?? payload;
   const cookieStore = await cookies();
   const token = cookieStore.get("viewer-session")?.value;

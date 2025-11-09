@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import toast from "react-hot-toast";
 import {
+	DocumentAttachment,
 	DocumentPermissions,
 	DocumentSecurityPolicy,
 	ViewerIdentityRequirement,
@@ -18,6 +19,7 @@ export type DashboardDocument = {
 	createdAt?: string;
 	fileName?: string;
 	fileUrl?: string | null;
+	attachments?: DocumentAttachment[];
 	richText?: string;
 	permissions: DocumentPermissions;
 	policies?: DocumentSecurityPolicy;
@@ -84,7 +86,7 @@ export function DocumentBuilder({ onCreated }: Props) {
 		useState<ViewerIdentityRequirement>({
 			...defaultIdentityRequirement,
 		});
-	const [file, setFile] = useState<File | null>(null);
+	const [files, setFiles] = useState<File[]>([]);
 	const [submitting, setSubmitting] = useState(false);
 
 	const policyToggles = useMemo<{ key: BooleanPolicyKey; label: string }[]>(
@@ -175,9 +177,9 @@ export function DocumentBuilder({ onCreated }: Props) {
 				"identityRequirement",
 				JSON.stringify(identityRequirement)
 			);
-			if (file) {
-				formData.append("file", file);
-			}
+			files.forEach((file) => {
+				formData.append("files", file);
+			});
 
 			const response = await fetch("/api/documents", {
 				method: "POST",
@@ -197,7 +199,7 @@ export function DocumentBuilder({ onCreated }: Props) {
 
 			setDescription("");
 
-			setFile(null);
+			setFiles([]);
 			setOtp("");
 			setPermissions({ ...defaultPermissions });
 			setPolicies({ ...defaultPolicies });
@@ -253,17 +255,53 @@ export function DocumentBuilder({ onCreated }: Props) {
 			<div className="grid gap-4 lg:grid-cols-2">
 				<div className="space-y-2">
 					<label className="text-xs uppercase tracking-[0.3em] text-slate-400">
-						Upload File
+						Upload Files
 					</label>
 
 					<input
 						type="file"
-						onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+						multiple
+						onChange={(event) =>
+							setFiles((prev) => [
+								...prev,
+								...Array.from(event.target.files ?? []),
+							])
+						}
 						className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white file:mr-4 file:rounded-full file:border-0 file:bg-cyan-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-900"
 					/>
 
+					{files.length > 0 && (
+						<ul className="space-y-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200">
+							{files.map((selectedFile) => (
+								<li
+									key={`${selectedFile.name}-${selectedFile.lastModified}`}
+									className="flex items-center justify-between gap-4"
+								>
+									<span>
+										{selectedFile.name} • {(selectedFile.size / 1024).toFixed(1)} KB
+									</span>
+									<button
+										type="button"
+										onClick={() =>
+											setFiles((prev) =>
+												prev.filter(
+													(file) =>
+														file.name !== selectedFile.name ||
+														file.lastModified !== selectedFile.lastModified,
+												),
+											)
+										}
+										className="text-rose-300 hover:text-rose-100"
+									>
+										Remove
+									</button>
+								</li>
+							))}
+						</ul>
+					)}
+
 					<p className="text-xs text-slate-400">
-						Optional. Rich text + file can ship together.
+						Optional. Rich text + attachments can ship together.
 					</p>
 				</div>
 

@@ -93,6 +93,15 @@ export type ViolationEvent = {
 	createdAt: string;
 };
 
+export type DocumentAttachment = {
+	id: string;
+	name: string;
+	type: string;
+	size: number;
+	url: string;
+	key?: string;
+};
+
 export type SecureDocument = {
 	documentId: string;
 	ownerId: string;
@@ -108,6 +117,7 @@ export type SecureDocument = {
 	fileUrl?: string | null;
 	fileName?: string;
 	fileType?: string;
+	attachments?: DocumentAttachment[];
 	policies?: DocumentSecurityPolicy;
 	createdAt?: string;
 	identityRequirement?: ViewerIdentityRequirement;
