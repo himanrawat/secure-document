@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { lockDocument } from "@/lib/services/documentService";
+import { cookies } from "next/headers";
+import { lockDocument, recordSessionViolation } from "@/lib/services/documentService";
 
 export const dynamic = "force-dynamic";
 
@@ -11,5 +12,20 @@ export async function POST(request: Request, context: Params) {
   const { id } = await context.params;
   const payload = await request.json().catch(() => ({}));
   await lockDocument(id, payload?.reason);
+
+  const cookieStore = await cookies();
+  const viewerToken = cookieStore.get("viewer-session")?.value;
+  if (viewerToken && payload?.violation?.id && payload?.violation?.code) {
+    await recordSessionViolation(viewerToken, {
+      violation: {
+        id: payload.violation.id,
+        code: payload.violation.code,
+        description: payload.violation.description ?? payload.reason ?? "Document locked",
+        createdAt: payload.violation.createdAt ?? new Date().toISOString(),
+      },
+      photo: payload.violation.evidenceUrl ?? null,
+    });
+  }
+
   return NextResponse.json({ ok: true });
 }

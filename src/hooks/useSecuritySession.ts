@@ -95,7 +95,11 @@ export function useSecuritySession({
 	);
 
 	const lockDocumentRemote = useCallback(
-		(reason: string) => {
+		(payload: {
+			reason: string;
+			violation?: ViolationEvent;
+			context?: Record<string, unknown>;
+		}) => {
 			if (lockRequestedRef.current) {
 				return;
 			}
@@ -103,7 +107,7 @@ export function useSecuritySession({
 			void fetch(`/api/documents/${document.documentId}/lock`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ reason }),
+				body: JSON.stringify(payload),
 			}).catch((error) => {
 				console.error("Failed to lock document", error);
 			});
@@ -151,7 +155,11 @@ export function useSecuritySession({
 			pushLog("VIOLATION", { code, ...context });
 			toast(description, { icon: "!" });
 			if (shouldRevokeSession(violation, document)) {
-				lockDocumentRemote(description);
+				lockDocumentRemote({
+					reason: description,
+					violation,
+					context,
+				});
 				killSession("Session revoked due to policy violation.");
 			}
 			return violation;
