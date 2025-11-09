@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import path from "path";
+import path from "node:path";
 
 // Simple in-memory lock to prevent concurrent writes to the same file
 const fileLocks = new Map<string, Promise<void>>();

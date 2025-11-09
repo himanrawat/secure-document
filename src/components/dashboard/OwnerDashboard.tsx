@@ -21,6 +21,7 @@ export function OwnerDashboard() {
   const [documents, setDocuments] = useState<DashboardDocument[]>([]);
   const [events, setEvents] = useState<LiveEvent[]>([]);
   const [readers, setReaders] = useState<ReaderSnapshot[]>([]);
+  const [isRefreshingReaders, setIsRefreshingReaders] = useState(false);
 
   const refreshDocuments = useCallback(async () => {
     try {
@@ -34,6 +35,7 @@ export function OwnerDashboard() {
   }, []);
 
   const refreshReaders = useCallback(async () => {
+    setIsRefreshingReaders(true);
     try {
       const response = await fetch("/api/readers", { cache: "no-store" });
       const data = await response.json();
@@ -41,6 +43,8 @@ export function OwnerDashboard() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to load readers";
       toast.error(message);
+    } finally {
+      setIsRefreshingReaders(false);
     }
   }, []);
 
@@ -65,12 +69,35 @@ export function OwnerDashboard() {
         if (data.type === "VIEWER_IDENTITY_CAPTURED") {
           refreshReaders();
         }
+        // Refresh readers on any security-related events
+        if (
+          data.type === "VIOLATION_LOGGED" ||
+          data.type === "LOCATION_CAPTURED" ||
+          data.type === "SESSION_REVOKED"
+        ) {
+          refreshReaders();
+        }
       } catch {
         // ignore
       }
     };
     return () => source.close();
   }, [refreshReaders]);
+
+  // Auto-refresh readers data when on Readers tab
+  useEffect(() => {
+    if (activeTab !== "Readers") return;
+
+    // Refresh immediately when tab is opened
+    refreshReaders();
+
+    // Poll every 3 seconds for updates
+    const interval = setInterval(() => {
+      refreshReaders();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [activeTab, refreshReaders]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-10 px-6 py-10">
@@ -109,7 +136,7 @@ export function OwnerDashboard() {
 
       {activeTab === "Events" && <EventsPanel events={events} />}
 
-      {activeTab === "Readers" && <ReadersPanel readers={readers} onRefresh={refreshReaders} />}
+      {activeTab === "Readers" && <ReadersPanel readers={readers} onRefresh={refreshReaders} isRefreshing={isRefreshingReaders} />}
     </div>
   );
 }

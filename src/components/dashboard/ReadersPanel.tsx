@@ -8,16 +8,43 @@ import { ReaderSnapshot } from "@/lib/types/reader";
 type Props = {
   readers: ReaderSnapshot[];
   onRefresh?: () => void;
+  isRefreshing?: boolean;
 };
 
-export function ReadersPanel({ readers, onRefresh }: Props) {
+export function ReadersPanel({ readers, onRefresh, isRefreshing = false }: Props) {
   const [selected, setSelected] = useState<ReaderSnapshot | null>(null);
   const [erasing, setErasing] = useState(false);
 
   if (!readers.length) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-8 text-center text-sm text-slate-300">
-        No readers have verified their identity yet.
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-white">Active Readers</h2>
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-300 disabled:opacity-50"
+          >
+            <svg
+              className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+        <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-8 text-center text-sm text-slate-300">
+          No readers have verified their identity yet.
+        </div>
       </div>
     );
   }
@@ -56,7 +83,7 @@ export function ReadersPanel({ readers, onRefresh }: Props) {
     const violations = reader.violations ?? [];
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm">
-        <div className="relative w-full max-w-3xl rounded-[32px] border border-white/10 bg-slate-900/90 px-8 py-8 text-slate-200 shadow-2xl">
+        <div className="relative w-full max-w-3xl rounded-[32px] border border-white/10 bg-slate-900/90 px-8 py-8 text-slate-200 shadow-2xl max-h-[80vh] overflow-y-auto">
           <button
             type="button"
             onClick={() => setSelected(null)}
@@ -158,6 +185,38 @@ export function ReadersPanel({ readers, onRefresh }: Props) {
   return (
     <>
       <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold text-white">Active Readers</h2>
+            {isRefreshing && (
+              <div className="flex items-center gap-2 text-xs text-cyan-400">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-400"></div>
+                Updating...
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-300 disabled:opacity-50"
+          >
+            <svg
+              className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
         {Object.entries(grouped).map(([documentId, records]) => (
           <section key={documentId} className="glass-panel flex flex-col gap-4 px-5 py-4">
             <header className="flex items-center justify-between">

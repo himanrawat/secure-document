@@ -11,8 +11,6 @@ import { useSecuritySession } from "@/hooks/useSecuritySession";
 import { DocumentViewport } from "@/components/security/DocumentViewport";
 import { CameraSentinel } from "@/components/security/CameraSentinel";
 import { ScreenShield } from "@/components/security/ScreenShield";
-import { SessionHud } from "@/components/security/SessionHud";
-import { ViolationPanel } from "@/components/security/ViolationPanel";
 import { WatermarkLayer } from "@/components/security/WatermarkLayer";
 
 type SnapshotDirective = {
@@ -34,6 +32,9 @@ type Props = {
 };
 
 export function SecureViewerShell({ document, viewer, initialSession }: Props) {
+	const [devToolsOpen, setDevToolsOpen] = useState(false);
+	const [devToolsChecked, setDevToolsChecked] = useState(false);
+
 	const snapshotQueue = useRef<
 		Array<{
 			directive: SnapshotDirective;
@@ -49,6 +50,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 	const lastLocationRef = useRef<ReaderLocation | null>(null);
 	const capturePhotoPolicy = document.policies?.captureReaderPhoto ?? false;
 	const trackLocation = document.policies?.locationTracking ?? false;
+	const [cameraObstructed, setCameraObstructed] = useState(false);
 
 	const pumpSnapshotQueue = useCallback(() => {
 		if (snapshotDirectiveRef.current || snapshotQueue.current.length === 0) {
@@ -63,6 +65,91 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 		setSnapshotDirective(next.directive);
 	}, []);
 
+	// Check for DevTools open before rendering document
+	useEffect(() => {
+		const checkDevTools = () => {
+			const widthGap = window.outerWidth - window.innerWidth;
+			const heightGap = window.outerHeight - window.innerHeight;
+
+			// DevTools detection: significant gap indicates DevTools is open
+			if (widthGap > 200 || heightGap > 200) {
+				setDevToolsOpen(true);
+			}
+			setDevToolsChecked(true);
+		};
+
+		// Check immediately and after a short delay to ensure accurate detection
+		checkDevTools();
+		const timer = setTimeout(checkDevTools, 100);
+
+		return () => clearTimeout(timer);
+	}, []);
+
+	// Monitor for DOM manipulation attempts
+	useEffect(() => {
+		if (!devToolsChecked || devToolsOpen) return;
+
+		const killSession = (reason: string) => {
+			globalThis.document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f172a;color:#ef4444;font-family:system-ui;text-align:center;padding:2rem"><div><h1 style="font-size:2rem;margin-bottom:1rem">Security Violation</h1><p>${reason}</p></div></div>`;
+			globalThis.location.reload();
+		};
+
+		const mutationCallback = (mutations: MutationRecord[]) => {
+			for (const mutation of mutations) {
+				// Check if protected elements are being removed
+				if (mutation.type === "childList") {
+					for (const node of mutation.removedNodes) {
+						if (node instanceof HTMLElement && node.dataset.securityOverlay) {
+							killSession("DOM manipulation detected. Session terminated.");
+							return;
+						}
+					}
+				}
+				// Check for style modifications to protected elements
+				if (
+					mutation.type === "attributes" &&
+					mutation.attributeName === "style"
+				) {
+					const target = mutation.target;
+					if (target instanceof HTMLElement && target.dataset.securityOverlay) {
+						const currentDisplay = target.style.display;
+						if (
+							currentDisplay === "none" ||
+							target.style.visibility === "hidden"
+						) {
+							killSession(
+								"Attempted to bypass security controls. Session terminated."
+							);
+							return;
+						}
+					}
+				}
+			}
+		};
+
+		const observer = new MutationObserver(mutationCallback);
+		observer.observe(globalThis.document.body, {
+			childList: true,
+			subtree: true,
+			attributes: true,
+			attributeFilter: ["style", "class"],
+		});
+
+		// Periodically verify security elements are intact
+		const verifyInterval = setInterval(() => {
+			const overlays = globalThis.document.querySelectorAll(
+				"[data-security-overlay]"
+			);
+			if (overlays.length === 0 && cameraObstructed) {
+				killSession("Security controls compromised. Session terminated.");
+			}
+		}, 1000);
+
+		return () => {
+			observer.disconnect();
+			clearInterval(verifyInterval);
+		};
+	}, [devToolsChecked, devToolsOpen, cameraObstructed]);
 	const requestSnapshot = useCallback(
 		(reason: SnapshotDirective["reason"], metadata?: Record<string, unknown>) =>
 			new Promise<SnapshotResult | null>((resolve) => {
@@ -143,10 +230,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 	const {
 		session,
 		camera,
-		logs,
-		violations,
 		focusLost,
-		revokedReason,
 		watermark,
 		updateCameraInsight,
 		registerViolation,
@@ -242,14 +326,77 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 		};
 	}, [capturePhotoPolicy, requestSnapshot, sendPresence]);
 
+	// Show blocking screen if DevTools detected before document loads
+	if (devToolsChecked && devToolsOpen) {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+				<div className="max-w-md space-y-6 rounded-3xl border border-rose-500/40 bg-rose-500/5 p-8 text-center">
+					<div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/20">
+						<svg
+							className="h-8 w-8 text-rose-400"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth={2}
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+							/>
+						</svg>
+					</div>
+					<div className="space-y-2">
+						<h1 className="text-2xl font-semibold text-white">
+							Developer Tools Detected
+						</h1>
+						<p className="text-sm text-rose-100">
+							This secure document cannot be accessed while browser developer
+							tools are open.
+						</p>
+					</div>
+					<div className="space-y-3 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4 text-left text-xs text-rose-100">
+						<p className="font-semibold">To continue:</p>
+						<ol className="ml-4 list-decimal space-y-1">
+							<li>Close the developer tools (F12 or Ctrl+Shift+I)</li>
+							<li>Refresh this page</li>
+							<li>Do not open developer tools while viewing the document</li>
+						</ol>
+					</div>
+					<p className="text-xs text-slate-400">
+						This security measure protects confidential content from
+						unauthorized inspection.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Show loading state while checking
+	if (!devToolsChecked) {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+				<div className="text-center">
+					<div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-cyan-500/20 border-t-cyan-500"></div>
+					<p className="mt-4 text-sm text-slate-400">
+						Initializing secure session...
+					</p>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 pb-16 pt-8">
 			<WatermarkLayer lines={watermark.lines} opacity={watermark.opacity} />
 			<div className="glass-panel relative z-10 border border-white/5 px-0 py-0">
 				<DocumentViewport document={document} />
-				<div className="grid gap-4 px-8 py-6 md:grid-cols-2">
+				{/* Security monitoring components (hidden from reader view) */}
+				<div className="hidden">
 					<CameraSentinel
-						onInsight={updateCameraInsight}
+						onInsight={(insight) =>
+							updateCameraInsight(insight, setCameraObstructed)
+						}
 						onSnapshot={handleSnapshot}
 						snapshotDirective={snapshotDirective}
 						disabled={!session.active}
@@ -260,22 +407,28 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 						focusLost={focusLost}
 					/>
 				</div>
-				<div className="grid gap-4 px-8 pb-8 md:grid-cols-[1.1fr,0.9fr]">
-					<SessionHud
-						session={session}
-						document={document}
-						violations={violations}
-						revokedReason={revokedReason}
-						onKill={() => killSession("Owner kill switch invoked.")}
-					/>
-					<ViolationPanel violations={violations} logs={logs} />
-				</div>
 			</div>
 			{focusLost && (
 				<div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-slate-900/80 backdrop-blur-lg">
 					<div className="rounded-3xl border border-rose-500/30 bg-rose-500/10 px-8 py-6 text-center text-sm text-rose-100">
 						Focus lost. Viewer blurred, recording attempts blocked. Return focus
 						to continue.
+					</div>
+				</div>
+			)}
+			{cameraObstructed && (
+				<div
+					className="pointer-events-none absolute inset-0 z-25 bg-black"
+					data-security-overlay="camera-obstruction"
+				>
+					<div className="flex h-full items-center justify-center">
+						<div className="rounded-3xl border border-rose-500/40 bg-rose-500/10 px-8 py-6 text-center text-sm text-rose-100">
+							<p className="text-lg font-semibold">Camera Obstructed</p>
+							<p className="mt-2 text-sm">
+								Please remove any obstruction from the camera to continue
+								viewing the document.
+							</p>
+						</div>
 					</div>
 				</div>
 			)}
