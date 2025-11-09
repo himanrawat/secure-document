@@ -1,5 +1,7 @@
+import type { ViolationCode } from "@/lib/types/security";
+
 type ScreenGuardOptions = {
-	onViolation: (code: string, context?: Record<string, unknown>) => void;
+	onViolation: (code: ViolationCode, context?: Record<string, unknown>) => void;
 	onFocusChange?: (hasFocus: boolean) => void;
 };
 

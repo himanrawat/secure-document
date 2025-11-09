@@ -16,7 +16,6 @@ export async function GET(
 		return NextResponse.json({ error: "Document not found" }, { status: 404 });
 	}
 	const { otp: _otp, ...sanitized } = document;
-	void _otp;
 	return NextResponse.json({
 		document: {
 			...sanitized,

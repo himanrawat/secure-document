@@ -7,13 +7,13 @@ import {
 	ViolationEvent,
 } from "@/lib/types/security";
 
-type Props = {
+type Props = Readonly<{
 	session: SessionStatus;
 	document: SecureDocument;
 	violations: ViolationEvent[];
 	revokedReason: string | null;
 	onKill: () => void;
-};
+}>;
 
 export function SessionHud({
 	session,

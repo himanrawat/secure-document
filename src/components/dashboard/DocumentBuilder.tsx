@@ -10,7 +10,6 @@ import {
 	securityLevels,
 } from "@/lib/types/security";
 import { RichTextEditor } from "@/components/dashboard/RichTextEditor";
-import { RICHTEXT_PLACEHOLDER } from "@/lib/constants";
 
 export type DashboardDocument = {
 	documentId: string;
@@ -30,7 +29,7 @@ export type DashboardDocument = {
 };
 
 type Props = {
-	onCreated: (doc: DashboardDocument) => void;
+	readonly onCreated: (doc: DashboardDocument) => void;
 };
 
 const defaultPermissions: DocumentPermissions = {

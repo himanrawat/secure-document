@@ -4,50 +4,58 @@ import { subscribeSystemEvents } from "@/lib/server/eventBus";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    start(controller) {
-      let closed = false;
-      let heartbeat: ReturnType<typeof setInterval> | null = null;
-      let unsubscribe: () => void = () => {};
+	const encoder = new TextEncoder();
+	let cleanup: (() => void) | null = null;
 
-      const cleanup = () => {
-        if (closed) return;
-        closed = true;
-        if (heartbeat) {
-          clearInterval(heartbeat);
-          heartbeat = null;
-        }
-        unsubscribe();
-        try {
-          controller.close();
-        } catch {
-          // already closed
-        }
-      };
+	const stream = new ReadableStream({
+		start(controller) {
+			let closed = false;
+			let heartbeat: ReturnType<typeof setInterval> | null = null;
+			let unsubscribe: () => void = () => {};
 
-      const send = (data: unknown) => {
-        if (closed) return;
-        try {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-        } catch {
-          cleanup();
-        }
-      };
+			cleanup = () => {
+				if (closed) return;
+				closed = true;
+				if (heartbeat) {
+					clearInterval(heartbeat);
+					heartbeat = null;
+				}
+				unsubscribe();
+				try {
+					controller.close();
+				} catch {
+					// already closed
+				}
+			};
 
-      send({ type: "READY" });
-      unsubscribe = subscribeSystemEvents((event) => send(event));
-      heartbeat = setInterval(() => send({ type: "HEARTBEAT", at: Date.now() }), 15000);
+			const send = (data: unknown) => {
+				if (closed) return;
+				try {
+					controller.enqueue(
+						encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+					);
+				} catch {
+					if (cleanup) cleanup();
+				}
+			};
 
-      controller.oncancel = cleanup;
-    },
-  });
+			send({ type: "READY" });
+			unsubscribe = subscribeSystemEvents((event) => send(event));
+			heartbeat = setInterval(
+				() => send({ type: "HEARTBEAT", at: Date.now() }),
+				15000
+			);
+		},
+		cancel() {
+			cleanup?.();
+		},
+	});
 
-  return new NextResponse(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-    },
-  });
+	return new NextResponse(stream, {
+		headers: {
+			"Content-Type": "text/event-stream",
+			"Cache-Control": "no-cache, no-transform",
+			Connection: "keep-alive",
+		},
+	});
 }

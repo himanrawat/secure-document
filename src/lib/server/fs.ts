@@ -1,4 +1,4 @@
-import { promises as fs } from "fs";
+import { promises as fs } from "node:fs";
 import path from "node:path";
 
 // Simple in-memory lock to prevent concurrent writes to the same file
