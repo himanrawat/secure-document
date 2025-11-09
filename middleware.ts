@@ -1,25 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 import { env } from "@/lib/env";
 
 const SESSION_COOKIE = "secure-session";
 const ownerPaths = ["/dashboard", "/api/documents", "/api/events"];
 const readerPaths = ["/reader"];
 
-function decodeSession(token?: string) {
+async function decodeSession(token?: string) {
 	if (!token) return null;
 	try {
-		return jwt.verify(token, env.sessionSecret) as { role: string };
+		const secret = new TextEncoder().encode(env.sessionSecret);
+		const { payload } = await jwtVerify(token, secret);
+		return payload as { role: string; id: string; email: string };
 	} catch (error) {
 		console.error("Session decode error:", error);
 		return null;
 	}
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 	const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
-	const session = decodeSession(sessionToken);
+	const session = await decodeSession(sessionToken);
 
 	// Debug logging for production issues
 	if (process.env.NODE_ENV === "production") {
@@ -47,7 +49,7 @@ export function middleware(request: NextRequest) {
 	}
 
 	if (requiresReader) {
-		if (!session || session.role !== "reader") {
+		if (!session?.role || session.role !== "reader") {
 			const loginUrl = new URL("/login", request.url);
 			loginUrl.searchParams.set("next", pathname);
 			return NextResponse.redirect(loginUrl);

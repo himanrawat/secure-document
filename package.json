@@ -21,6 +21,7 @@
     "date-fns": "^4.1.0",
     "docx-preview": "^0.3.7",
     "face-api.js": "^0.22.2",
+    "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.553.0",
     "marked": "^17.0.0",
