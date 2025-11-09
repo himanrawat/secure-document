@@ -291,7 +291,7 @@ export function DocumentBuilder({ onCreated }: Props) {
 				</div>
 			</div>
 
-			<div className="space-y-3 rounded-3xl border border-white/10 bg-white/5 px-5 py-5">
+			<div className="space-y-3 rounded-xl border border-white/10 bg-white/5 px-5 py-5">
 				<div className="flex items-center justify-between">
 					<div>
 						<p className="text-xs uppercase tracking-[0.3em] text-slate-400">
@@ -453,7 +453,7 @@ export function DocumentBuilder({ onCreated }: Props) {
 			<button
 				type="submit"
 				disabled={submitting}
-				className="w-full rounded-3xl bg-cyan-500 px-6 py-4 text-sm font-semibold uppercase tracking-[0.3em] text-slate-900 disabled:opacity-60"
+				className="w-full rounded-xl bg-cyan-500 px-6 py-4 text-sm font-semibold uppercase tracking-[0.3em] text-slate-900 disabled:opacity-60"
 			>
 				{submitting ? "Publishing..." : "Publish Secure Document"}
 			</button>

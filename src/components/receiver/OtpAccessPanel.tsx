@@ -56,7 +56,7 @@ export function OtpAccessPanel() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="glass-panel flex flex-col gap-4 rounded-3xl px-6 py-6 text-slate-100"
+      className="glass-panel flex flex-col gap-4 rounded-xl px-6 py-6 text-slate-100"
     >
       <div>
         <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Receiver Access</p>

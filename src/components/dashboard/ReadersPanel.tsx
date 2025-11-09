@@ -46,7 +46,7 @@ export function ReadersPanel({
 						{isRefreshing ? "Refreshing..." : "Refresh"}
 					</button>
 				</div>
-				<div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-8 text-center text-sm text-slate-300">
+				<div className="rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center text-sm text-slate-300">
 					No readers have verified their identity yet.
 				</div>
 			</div>
@@ -93,119 +93,125 @@ export function ReadersPanel({
 		const violations = reader.violations ?? [];
 		return (
 			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm">
-				<div className="relative w-full max-w-3xl rounded-[32px] border border-white/10 bg-slate-900/90 px-8 py-8 text-slate-200 shadow-2xl max-h-[80vh] overflow-y-auto">
-					<button
-						type="button"
-						onClick={() => setSelected(null)}
-						className="absolute right-5 top-5 rounded-full border border-white/10 px-3 py-1 text-xs text-slate-400 hover:border-white/40 hover:text-white"
-					>
-						Close
-					</button>
-					<header className="flex flex-col gap-2 pb-4">
-						<p className="text-xs uppercase tracking-[0.35em] text-slate-400">
-							Reader Details
-						</p>
-						<h2 className="text-2xl font-semibold text-white">
-							{reader.name ?? "Unknown viewer"}
-						</h2>
-						<p className="text-sm text-slate-400">
-							{reader.phone ?? "Phone not provided"}
-						</p>
-						<p className="text-xs text-slate-500">
-							Verified{" "}
-							{reader.verifiedAt
-								? new Date(reader.verifiedAt).toLocaleString()
-								: "unknown time"}
-						</p>
-					</header>
-					<div className="grid gap-4 md:grid-cols-2">
-						<section className="rounded-2xl border border-white/5 bg-white/5 px-4 py-4 text-xs">
-							<p className="text-[0.6rem] uppercase tracking-[0.3em] text-slate-400">
-								Last location
-							</p>
-							{location ? (
-								<div className="mt-2 space-y-1 text-slate-200">
-									<p>
-										{location.lat.toFixed(4)}, {location.lon.toFixed(4)}
-									</p>
-									<p className="text-slate-400">+/-{location.accuracy ?? 0}m</p>
-									<p className="text-slate-500">
-										{new Date(location.capturedAt).toLocaleString()}
-									</p>
-								</div>
-							) : (
-								<p className="mt-2 text-slate-400">No location captured.</p>
-							)}
-						</section>
-						<section className="rounded-2xl border border-white/5 bg-white/5 px-4 py-4 text-xs">
-							<p className="text-[0.6rem] uppercase tracking-[0.3em] text-slate-400">
-								Recent logs
-							</p>
-							<div className="mt-3 space-y-2 text-slate-300">
-								{logs.length ? (
-									logs.map((log) => (
-										<div
-											key={log.id}
-											className="rounded-xl border border-white/5 bg-black/40 px-3 py-2"
-										>
-											<p className="text-white">{log.event}</p>
-											<p className="text-[0.6rem] text-slate-500">
-												{new Date(log.createdAt).toLocaleTimeString()}
-											</p>
-										</div>
-									))
-								) : (
-									<p className="text-slate-400">No logs synced yet.</p>
-								)}
-							</div>
-						</section>
-					</div>
-					<section className="mt-6 space-y-3">
-						<div className="flex items-center justify-between">
-							<p className="text-sm font-semibold text-white">Violations</p>
-							<span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-400">
-								{violations.length} recorded
-							</span>
-						</div>
-						{violations.length ? (
-							<div className="space-y-3">
-								{violations.map((violation) => (
-									<div
-										key={violation.id}
-										className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-xs text-rose-50"
-									>
-										<p className="font-semibold">{violation.message}</p>
-										<p className="text-rose-100">
-											{new Date(violation.occurredAt).toLocaleString()}
-										</p>
-										{violation.photo && (
-											<Image
-												src={violation.photo}
-												alt="Violation evidence"
-												width={320}
-												height={180}
-												className="mt-2 rounded-xl border border-white/10 object-cover"
-												unoptimized
-											/>
-										)}
-									</div>
-								))}
-							</div>
-						) : (
-							<p className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-100">
-								No violations logged for this reader.
-							</p>
-						)}
-					</section>
-					<div className="mt-6 flex flex-wrap gap-3">
+				<div className="relative w-full max-w-3xl rounded-xl border border-white/10 bg-slate-900/90 shadow-2xl max-h-[80vh] overflow-hidden flex flex-col pb-4">
+					<div className="px-8 pt-8 pb-4 shrink-0">
 						<button
 							type="button"
-							onClick={() => handleDelete(reader.viewerId)}
-							disabled={erasing}
-							className="rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-rose-100 transition hover:border-rose-400 hover:text-rose-300 disabled:opacity-60"
+							onClick={() => setSelected(null)}
+							className="absolute right-5 top-5 rounded-full border border-white/10 px-3 py-1 text-xs text-slate-400 hover:border-white/40 hover:text-white"
 						>
-							{erasing ? "Deleting…" : "Delete reader data"}
+							Close
 						</button>
+						<header className="flex flex-col gap-2">
+							<p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+								Reader Details
+							</p>
+							<h2 className="text-2xl font-semibold text-white">
+								{reader.name ?? "Unknown viewer"}
+							</h2>
+							<p className="text-sm text-slate-400">
+								{reader.phone ?? "Phone not provided"}
+							</p>
+							<p className="text-xs text-slate-500">
+								Verified{" "}
+								{reader.verifiedAt
+									? new Date(reader.verifiedAt).toLocaleString()
+									: "unknown time"}
+							</p>
+						</header>
+					</div>
+					<div className="px-8 pb-8 overflow-y-auto flex-1 text-slate-200">
+						<div className="grid gap-4 md:grid-cols-2">
+							<section className="rounded-2xl border border-white/5 bg-white/5 px-4 py-4 text-xs">
+								<p className="text-[0.6rem] uppercase tracking-[0.3em] text-slate-400">
+									Last location
+								</p>
+								{location ? (
+									<div className="mt-2 space-y-1 text-slate-200">
+										<p>
+											{location.lat.toFixed(4)}, {location.lon.toFixed(4)}
+										</p>
+										<p className="text-slate-400">
+											+/-{location.accuracy ?? 0}m
+										</p>
+										<p className="text-slate-500">
+											{new Date(location.capturedAt).toLocaleString()}
+										</p>
+									</div>
+								) : (
+									<p className="mt-2 text-slate-400">No location captured.</p>
+								)}
+							</section>
+							<section className="rounded-2xl border border-white/5 bg-white/5 px-4 py-4 text-xs max-h-80">
+								<p className="text-[0.6rem] uppercase tracking-[0.3em] text-slate-400">
+									Recent logs
+								</p>
+								<div className="mt-3 space-y-2 text-slate-300 overflow-y-auto max-h-40">
+									{logs.length ? (
+										logs.map((log) => (
+											<div
+												key={log.id}
+												className="rounded-xl border border-white/5 bg-black/40 px-3 py-2"
+											>
+												<p className="text-white">{log.event}</p>
+												<p className="text-[0.6rem] text-slate-500">
+													{new Date(log.createdAt).toLocaleTimeString()}
+												</p>
+											</div>
+										))
+									) : (
+										<p className="text-slate-400">No logs synced yet.</p>
+									)}
+								</div>
+							</section>
+						</div>
+						<section className="mt-6 space-y-3">
+							<div className="flex items-center justify-between">
+								<p className="text-sm font-semibold text-white">Violations</p>
+								<span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-400">
+									{violations.length} recorded
+								</span>
+							</div>
+							{violations.length ? (
+								<div className="space-y-3">
+									{violations.map((violation) => (
+										<div
+											key={violation.id}
+											className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-xs text-rose-50"
+										>
+											<p className="font-semibold">{violation.message}</p>
+											<p className="text-rose-100">
+												{new Date(violation.occurredAt).toLocaleString()}
+											</p>
+											{violation.photo && (
+												<Image
+													src={violation.photo}
+													alt="Violation evidence"
+													width={320}
+													height={180}
+													className="mt-2 rounded-xl border border-white/10 object-cover"
+													unoptimized
+												/>
+											)}
+										</div>
+									))}
+								</div>
+							) : (
+								<p className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-100">
+									No violations logged for this reader.
+								</p>
+							)}
+						</section>
+						<div className="mt-6 flex flex-wrap gap-3">
+							<button
+								type="button"
+								onClick={() => handleDelete(reader.viewerId)}
+								disabled={erasing}
+								className="rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-rose-100 transition hover:border-rose-400 hover:text-rose-300 disabled:opacity-60"
+							>
+								{erasing ? "Deleting…" : "Delete reader data"}
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>

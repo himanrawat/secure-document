@@ -64,7 +64,7 @@ export function DocumentsList({ documents, onRefresh }: Props) {
 
   if (!documents.length) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-8 text-center text-sm text-slate-300">
+      <div className="rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center text-sm text-slate-300">
         Secure documents will appear here after you publish them.
       </div>
     );

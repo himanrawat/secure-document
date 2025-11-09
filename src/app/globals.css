@@ -33,6 +33,40 @@ body {
   color: #fafafa;
 }
 
+/* Custom Scrollbar Styles */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.3) rgba(2, 6, 23, 0.2);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(2, 6, 23, 0.2);
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: rgba(148, 163, 184, 0.6);
+}
+
+*::-webkit-scrollbar-corner {
+  background: rgba(2, 6, 23, 0.2);
+}
+
 [data-blur="true"] {
   filter: blur(24px);
   transition: filter 250ms ease;

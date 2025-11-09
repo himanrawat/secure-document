@@ -330,7 +330,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 	if (devToolsChecked && devToolsOpen) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-				<div className="max-w-md space-y-6 rounded-3xl border border-rose-500/40 bg-rose-500/5 p-8 text-center">
+				<div className="max-w-md space-y-6 rounded-xl border border-rose-500/40 bg-rose-500/5 p-8 text-center">
 					<div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/20">
 						<svg
 							className="h-8 w-8 text-rose-400"
@@ -410,7 +410,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 			</div>
 			{focusLost && (
 				<div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-slate-900/80 backdrop-blur-lg">
-					<div className="rounded-3xl border border-rose-500/30 bg-rose-500/10 px-8 py-6 text-center text-sm text-rose-100">
+					<div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-8 py-6 text-center text-sm text-rose-100">
 						Focus lost. Viewer blurred, recording attempts blocked. Return focus
 						to continue.
 					</div>
@@ -422,7 +422,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 					data-security-overlay="camera-obstruction"
 				>
 					<div className="flex h-full items-center justify-center">
-						<div className="rounded-3xl border border-rose-500/40 bg-rose-500/10 px-8 py-6 text-center text-sm text-rose-100">
+						<div className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-8 py-6 text-center text-sm text-rose-100">
 							<p className="text-lg font-semibold">Camera Obstructed</p>
 							<p className="mt-2 text-sm">
 								Please remove any obstruction from the camera to continue
@@ -434,7 +434,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 			)}
 			{fullscreenPrompt && (
 				<div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 backdrop-blur-xl">
-					<div className="space-y-4 rounded-3xl border border-white/10 bg-white/5 px-8 py-6 text-center text-white">
+					<div className="space-y-4 rounded-xl border border-white/10 bg-white/5 px-8 py-6 text-center text-white">
 						<p className="text-lg font-semibold">Fullscreen required</p>
 						<p className="text-sm text-slate-300">
 							This document must remain in fullscreen. Return to secure mode or
@@ -459,7 +459,7 @@ export function SecureViewerShell({ document, viewer, initialSession }: Props) {
 			)}
 			{!session.active && (
 				<div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/90">
-					<div className="rounded-3xl border border-rose-500/40 bg-rose-500/10 px-8 py-6 text-center text-sm text-rose-100">
+					<div className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-8 py-6 text-center text-sm text-rose-100">
 						Session revoked. All encrypted material destroyed. Owner and
 						auditors notified.
 					</div>
