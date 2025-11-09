@@ -90,7 +90,10 @@ export function ReadersPanel({
 	const renderDetailPanel = (reader: ReaderSnapshot) => {
 		const location = reader.lastLocation;
 		const logs = reader.logs ?? [];
-		const violations = reader.violations ?? [];
+		// Deduplicate violations by ID (safeguard against duplicate entries)
+		const violations = Array.from(
+			new Map((reader.violations ?? []).map((v) => [v.id, v])).values()
+		);
 		return (
 			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm">
 				<div className="relative w-full max-w-3xl rounded-xl border border-white/10 bg-slate-900/90 shadow-2xl max-h-[80vh] overflow-hidden flex flex-col pb-4">

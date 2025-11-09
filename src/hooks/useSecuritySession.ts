@@ -122,6 +122,7 @@ export function useSecuritySession({
 				code === "EXTERNAL_CAMERA_DETECTED" ? "CRITICAL" : "HIGH";
 			const violation = createViolation(code, description, severity);
 			setViolations((prev) => [violation, ...prev].slice(0, 32));
+
 			const notify = (evidence?: EvidencePayload | null) => {
 				MonitoringNotifier.violation({
 					documentId: document.documentId,
@@ -131,37 +132,55 @@ export function useSecuritySession({
 					evidence,
 				});
 			};
-			if (requestEvidence) {
-				void requestEvidence(code)
-					.then((evidence) => {
+
+			const updateViolationWithEvidence = (evidencePhoto: string) => {
+				setViolations((prev) =>
+					prev.map((entry) =>
+						entry.id === violation.id
+							? { ...entry, evidenceUrl: evidencePhoto }
+							: entry
+					)
+				);
+			};
+
+			const handleViolationWithEvidence = async () => {
+				let evidence: EvidencePayload | null = null;
+
+				if (requestEvidence) {
+					try {
+						evidence = await requestEvidence(code);
 						if (evidence?.photo) {
-							setViolations((prev) =>
-								prev.map((entry) =>
-									entry.id === violation.id
-										? {
-												...entry,
-												evidenceUrl: evidence.photo ?? entry.evidenceUrl,
-										  }
-										: entry
-								)
-							);
+							updateViolationWithEvidence(evidence.photo);
 						}
-						notify(evidence);
-					})
-					.catch(() => notify());
-			} else {
-				notify();
-			}
+					} catch (error) {
+						console.error("Failed to capture evidence:", error);
+					}
+				}
+
+				notify(evidence);
+
+				if (shouldRevokeSession(violation, document)) {
+					const updatedViolation = {
+						...violation,
+						evidenceUrl: evidence?.photo ?? violation.evidenceUrl,
+					};
+					lockDocumentRemote({
+						reason: description,
+						violation: updatedViolation,
+						context: {
+							...context,
+							evidencePhoto: evidence?.photo ?? undefined,
+						},
+					});
+					killSession("Session revoked due to policy violation.");
+				}
+			};
+
+			void handleViolationWithEvidence();
+
 			pushLog("VIOLATION", { code, ...context });
 			toast(description, { icon: "!" });
-			if (shouldRevokeSession(violation, document)) {
-				lockDocumentRemote({
-					reason: description,
-					violation,
-					context,
-				});
-				killSession("Session revoked due to policy violation.");
-			}
+
 			return violation;
 		},
 		[
@@ -204,7 +223,7 @@ export function useSecuritySession({
 		if (!session.active) {
 			return;
 		}
-		const interval = window.setInterval(() => {
+		const interval = globalThis.setInterval(() => {
 			MonitoringNotifier.heartbeat({
 				sessionId: session.id,
 				documentId: document.documentId,
@@ -212,7 +231,7 @@ export function useSecuritySession({
 			});
 			pushLog("HEARTBEAT", { tamperHash: session.tamperHash });
 		}, session.heartbeatMs);
-		return () => window.clearInterval(interval);
+		return () => globalThis.clearInterval(interval);
 	}, [document.documentId, pushLog, session]);
 
 	const handleFocusChange = useCallback(
